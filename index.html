@@ -197,8 +197,17 @@ function renderStandings(){const you=Object.values(state.picks).reduce((sum,t)=>
 $("saveSettings").onclick=()=>{state.leagueName=$("leagueNameInput").value.trim()||"My League";state.required=Math.max(1,Math.min(12,+$("requiredPicks").value||4));state.maxParlays=Math.max(0,Math.min(5,+$("parlayMax").value||0));state.win=Math.max(0,+$("pointsWin").value||0);state.cover=Math.max(0,+$("pointsCover").value||0);state.dog=Math.max(0,+$("pointsDog").value||0);state.bonus=Math.max(0,+$("parlayBonus").value||0);state.visibility=$("visibility").value;state.deadline=$("deadlineRule").value;updateStats();renderGames();renderParlays();toast("League settings saved in this browser.");};
 $("copyCode").onclick=async()=>{try{await navigator.clipboard.writeText(state.code);toast("Invite code copied.")}catch{toast("Invite code: "+state.code)}};
 $("joinLeague").onclick=()=>{const c=$("joinCode").value.trim().toUpperCase();toast(c===state.code?"Demo league code accepted. Real joining comes later.":"No demo league found for that code.")};
-$("inviteLink").value=location.href.split("#")[0]+"?join="+state.code;
-$("copyLink").onclick=async()=>{try{await navigator.clipboard.writeText($("inviteLink").value);toast("Demo invitation link copied.")}catch{toast($("inviteLink").value)}};
+if ($("inviteLink") && $("copyLink")) {
+  $("inviteLink").value = location.href.split("#")[0] + "?join=" + state.code;
+  $("copyLink").onclick = async () => {
+    try {
+      await navigator.clipboard.writeText($("inviteLink").value);
+      toast("Demo invitation link copied.");
+    } catch {
+      toast($("inviteLink").value);
+    }
+  };
+}
 async function loadRealLeagues(){
  const box=$("realLeagueList"); if(!box)return;
  const {data:sessionData}=await supabaseClient.auth.getSession();
