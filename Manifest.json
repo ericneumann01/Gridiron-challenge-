@@ -1,0 +1,12 @@
+{
+  "name": "Gridiron Challenge",
+  "short_name": "Gridiron",
+  "description": "Football picks, parlays, and league leaderboards.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b1220",
+  "theme_color": "#0b1220",
+  "icons": []
+}
