@@ -193,7 +193,7 @@ $("submitPicks").onclick=()=>{const n=Object.keys(state.picks).length;if(n<state
 function renderParlays(){const entries=Object.entries(state.picks);$("parlayPickOptions").innerHTML=entries.length?entries.map(([id,type])=>{const g=games.find(x=>x.id==id);return `<label style="display:flex;gap:9px;align-items:flex-start;padding:10px;border:1px solid var(--line);border-radius:10px;margin-bottom:7px"><input type="checkbox" value="${id}" style="width:auto;margin-top:4px"><span><strong>${predictionLabel(g,type)}</strong><br><span class="small muted">${g.league} · ${g.time}</span></span></label>`}).join(""):'<div class="empty">Make individual picks first. Your selections will appear here.</div>';
 $("parlayList").innerHTML=state.parlays.length?state.parlays.map((p,i)=>`<div class="parlaybox"><div class="parlaytitle"><strong>${p.name||"Parlay "+(i+1)}</strong><button class="btn danger small" data-remove="${i}">Remove</button></div><p class="small muted">${p.legs.length} legs · ${state.bonus} bonus points if all legs are correct</p>${p.legs.map(l=>`<div class="leg"><span>${l.label}</span><strong>${l.points} pt</strong></div>`).join("")}</div>`).join(""):'<div class="empty">No parlays yet.</div>';
 $("parlayList").querySelectorAll("[data-remove]").forEach(b=>b.onclick=()=>{state.parlays.splice(+b.dataset.remove,1);renderParlays();updateStats()})}
-$("createParlay").onclick=()=>{if(state.parlays.length>=state.maxParlays){toast(`This league allows at most ${state.maxParlays} parlays.`);return}const ids=[...$("parlayPickOptions").querySelectorAll('input[type="checkbox"]:checked')].map(x=>+x.value);if(ids.length<2){toast("Select at least two picks for a parlay.");return}const legs=ids.map(id=>{const g=games.find(x=>x.id===id),type=state.picks[id];return {label:predictionLabel(g,type),points:pointsFor(type),gameId:id,type}});state.parlays.push({name:$("parlayName").value.trim(),legs});$("parlayName").value="";renderParlays();updateStats();toast("Parlay created.")};
+$("createParlay").onclick=()=>{if(state.parlays.length>=state.maxParlays){toast(`This league allows at most ${state.maxParlays} parlays.`);return}const ids=[...$("parlayPickOptions").querySelectorAll('input[type="checkbox"]:checked')].map(x=>x.value);if(ids.length<2){toast("Select at least two picks for a parlay.");return}const legs=ids.map(id=>{const g=games.find(x=>x.id===id),type=state.picks[id];return {label:predictionLabel(g,type),points:pointsFor(type),gameId:id,type}});state.parlays.push({name:$("parlayName").value.trim(),legs});$("parlayName").value="";renderParlays();updateStats();toast("Parlay created.")};
 function renderStandings(){const you=Object.values(state.picks).reduce((sum,t)=>sum+pointsFor(t),0);const rows=[{name:"Megan",week:16,season:126,wins:2},{name:"Derek",week:14,season:119,wins:1},{name:"You",week:you,season:104+you,wins:1,you:true},{name:"Chris",week:10,season:98,wins:0},{name:"Jordan",week:8,season:92,wins:0}].sort((a,b)=>b.season-a.season);$("standingsBody").innerHTML=rows.map((r,i)=>`<tr class="${r.you?"yourow":""}"><td class="rank">${i+1}</td><td><strong>${r.name}</strong>${r.you?' <span class="badge">You</span>':""}</td><td>${r.week}</td><td><strong>${r.season}</strong></td><td>${r.wins}</td></tr>`).join("")}
 $("saveSettings").onclick=()=>{state.leagueName=$("leagueNameInput").value.trim()||"My League";state.required=Math.max(1,Math.min(12,+$("requiredPicks").value||4));state.maxParlays=Math.max(0,Math.min(5,+$("parlayMax").value||0));state.win=Math.max(0,+$("pointsWin").value||0);state.cover=Math.max(0,+$("pointsCover").value||0);state.dog=Math.max(0,+$("pointsDog").value||0);state.bonus=Math.max(0,+$("parlayBonus").value||0);state.visibility=$("visibility").value;state.deadline=$("deadlineRule").value;updateStats();renderGames();renderParlays();toast("League settings saved in this browser.");};
 $("copyCode").onclick=async()=>{try{await navigator.clipboard.writeText(state.code);toast("Invite code copied.")}catch{toast("Invite code: "+state.code)}};
@@ -229,12 +229,82 @@ box.querySelectorAll('[data-select-league]').forEach(b=>b.onclick=async()=>{
   state.maxParlays=selected.max_parlays;
   $("realLeagueStatus").textContent='Selected league: '+selected.name;
  }
+ await loadRealGames();
  await loadRealLeagues();
  toast('League selected.');
 });
 
 }
-function escapeHtml(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+async function loadRealGames(){
+ if(!activeLeagueId)return;
+
+ const {data:weeks,error:weekError}=await supabaseClient
+  .from('weeks')
+  .select('id,week_number,title')
+  .eq('league_id',activeLeagueId)
+  .order('week_number',{ascending:true});
+
+ if(weekError){
+  $("realLeagueStatus").textContent='Could not load weeks: '+weekError.message;
+  return;
+ }
+ if(!weeks||!weeks.length){
+  $("realLeagueStatus").textContent='No games have been assigned to this league yet.';
+  return;
+ }
+
+ const week=weeks[0];
+ const {data:links,error:linkError}=await supabaseClient
+  .from('week_games')
+  .select('game_id')
+  .eq('week_id',week.id);
+
+ if(linkError){
+  $("realLeagueStatus").textContent='Could not load game links: '+linkError.message;
+  return;
+ }
+ if(!links||!links.length){
+  $("realLeagueStatus").textContent='No games are assigned to this week yet.';
+  return;
+ }
+
+ const ids=links.map(x=>x.game_id);
+ const {data:rows,error:gameError}=await supabaseClient
+  .from('games')
+  .select('id,sport,away_team,home_team,favorite_team,spread,kickoff_at,status')
+  .in('id',ids);
+
+ if(gameError){
+  $("realLeagueStatus").textContent='Could not load games: '+gameError.message;
+  return;
+ }
+ if(!rows||!rows.length)return;
+
+ games=rows.map(g=>({
+  id:g.id,
+  league:g.sport==='NCAA'?'NCAA':'NFL',
+  away:g.away_team,
+  home:g.home_team,
+  favorite:({ARI:'Arizona Cardinals',ATL:'Atlanta Falcons',BAL:'Baltimore Ravens',BUF:'Buffalo Bills',CAR:'Carolina Panthers',CHI:'Chicago Bears',CIN:'Cincinnati Bengals',CLE:'Cleveland Browns',DAL:'Dallas Cowboys',DEN:'Denver Broncos',DET:'Detroit Lions',GB:'Green Bay Packers',HOU:'Houston Texans',IND:'Indianapolis Colts',JAX:'Jacksonville Jaguars',KC:'Kansas City Chiefs',LV:'Las Vegas Raiders',LAC:'Los Angeles Chargers',LA:'Los Angeles Rams',MIA:'Miami Dolphins',MIN:'Minnesota Vikings',NE:'New England Patriots',NO:'New Orleans Saints',NYG:'New York Giants',NYJ:'New York Jets',PHI:'Philadelphia Eagles',PIT:'Pittsburgh Steelers',SF:'San Francisco 49ers',SEA:'Seattle Seahawks',TB:'Tampa Bay Buccaneers',TEN:'Tennessee Titans',WAS:'Washington Commanders'}[g.favorite_team]||g.favorite_team),
+  spread:Number(g.spread)||0,
+  time:new Date(g.kickoff_at).toLocaleString('en-US',{
+   timeZone:'America/Chicago',
+   weekday:'short',
+   hour:'numeric',
+   minute:'2-digit'
+  })+' CT',
+  status:g.status||'Upcoming'
+ }));
+
+ renderGames('featuredGames');
+ renderGames();
+ renderParlays();
+ updateStats();
+ $("realLeagueStatus").textContent=`Loaded ${games.length} real games for Week ${week.week_number}.`;
+}
+
+ function escapeHtml(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 $("createRealLeague").onclick=async()=>{
  const {data:sd}=await supabaseClient.auth.getSession();if(!sd.session){toast('Please sign in first.');return;}
  const name=$("realLeagueName").value.trim();if(!name){toast('Enter a league name.');return;}
