@@ -217,8 +217,22 @@ async function loadRealLeagues(){
  if(error){box.innerHTML='<div class="empty">Could not load leagues: '+escapeHtml(error.message)+'</div>';return;}
  const list=(members||[]).map(m=>({...m,league:m.leagues})).filter(m=>m.league);
  if(!list.length){box.innerHTML='<div class="empty">No leagues yet. Create one above or join with a code.</div>';return;}
- box.innerHTML=list.map(m=>`<article class="game"><div class="sectionhead"><h3 style="margin:0">${escapeHtml(m.league.name)}</h3><span class="badge">${m.role==='manager'?'Manager':'Player'}</span></div><p class="small muted">Invite code: <strong>${escapeHtml(m.league.invite_code)}</strong></p><p class="small muted">${m.league.required_picks} picks per week · Up to ${m.league.max_parlays} parlays</p><button class="btn ghost" data-copy-code="${escapeHtml(m.league.invite_code)}">Copy invite code</button></article>`).join('');
+ box.innerHTML=list.map(m=>`<article class="game" style="border:1px solid ${activeLeagueId===m.league.id?'var(--accent)':'var(--line)'}"><div class="sectionhead"><h3 style="margin:0">${escapeHtml(m.league.name)}</h3><span class="badge">${m.role==='manager'?'Manager':'Player'}</span></div><p class="small muted">Invite code: <strong>${escapeHtml(m.league.invite_code)}</strong></p><p class="small muted">${m.league.required_picks} picks per week · Up to ${m.league.max_parlays} parlays</p><button class="btn secondary" data-select-league="${m.league.id}">${activeLeagueId===m.league.id?'Selected league':'Select league'}</button> <button class="btn ghost" data-copy-code="${escapeHtml(m.league.invite_code)}">Copy invite code</button></article>`).join('');
  box.querySelectorAll('[data-copy-code]').forEach(b=>b.onclick=async()=>{try{await navigator.clipboard.writeText(b.dataset.copyCode);toast('Invite code copied.')}catch{toast('Invite code: '+b.dataset.copyCode)}});
+ 
+box.querySelectorAll('[data-select-league]').forEach(b=>b.onclick=async()=>{
+ activeLeagueId=b.dataset.selectLeague;
+ const selected=list.find(m=>m.league.id===activeLeagueId)?.league;
+ if(selected){
+  state.leagueName=selected.name;
+  state.required=selected.required_picks;
+  state.maxParlays=selected.max_parlays;
+  $("realLeagueStatus").textContent='Selected league: '+selected.name;
+ }
+ await loadRealLeagues();
+ toast('League selected.');
+});
+
 }
 function escapeHtml(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 $("createRealLeague").onclick=async()=>{
