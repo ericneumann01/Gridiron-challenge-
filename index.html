@@ -133,7 +133,8 @@ const SUPABASE_URL = "https://andrvwdgvvtbrmksract.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFuZHJ2d2RndnZ0YnJta3NyYWN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE5MjM1MzAsImV4cCI6MjEwNzQ5OTUzMH0.xRhmWDLC-S0ybsdvz5RwSSIf7ZDaU8kzJaKUMMaQUUo";
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const state={leagueName:"Gridiron Challenge Classic",required:4,maxParlays:2,win:1,cover:2,dog:3,bonus:4,visibility:"Hidden until deadline",deadline:"No points for missing picks",picks:{},parlays:[],submitted:false,filter:"All",code:"GRID7K"};
-const $=id=>document.getElementById(id);
+let activeLeagueId = null;
+ const $=id=>document.getElementById(id);
 function showAuthStatus(message, signedIn=false){
  const status=$("auth-status");
  status.textContent=message;
