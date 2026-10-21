@@ -186,7 +186,111 @@ $("quickPicks").onclick=()=>setTab("picks");
 function predictionLabel(g,type){if(type==="win")return g.favorite+" wins";if(type==="cover")return g.favorite+" covers -"+g.spread;return (g.favorite===g.away?g.home:g.away)+" wins outright"}
 function pointsFor(type){return type==="win"?state.win:type==="cover"?state.cover:state.dog}
 function gameCard(g){const picked=state.picks[g.id];return `<article class="game"><div class="gamehead"><span class="badge">${g.league}</span><span class="meta">${g.time}</span></div><div class="teams"><div><div class="team">${g.away}</div><div class="spreadline">${g.away===g.favorite?"Favorite":"Underdog"}</div></div><div class="vs">VS</div><div><div class="team">${g.home}</div><div class="spreadline">${g.home===g.favorite?"Favorite":"Underdog"}</div></div></div><div class="spreadline" style="margin-top:10px">Favorite: <strong>${g.favorite} -${g.spread}</strong></div><div class="pickopts"><button class="pickopt ${picked==="win"?"selected":""}" data-pick="${g.id}:win">Favorite wins<small>${state.win} point${state.win===1?"":"s"}</small></button><button class="pickopt ${picked==="cover"?"selected":""}" data-pick="${g.id}:cover">Favorite covers<small>${state.cover} points</small></button><button class="pickopt ${picked==="dog"?"selected":""}" data-pick="${g.id}:dog">Underdog wins<small>${state.dog} points</small></button></div></article>`}
-function renderGames(target="allGames"){const list=target==="featuredGames"?games.slice(0,2):games.filter(g=>state.filter==="All"||g.league===state.filter);$(target).innerHTML=list.map(gameCard).join("");$(target).querySelectorAll("[data-pick]").forEach(b=>b.onclick=()=>{const [id,type]=b.dataset.pick.split(":");if(state.picks[id]===type)delete state.picks[id];else state.picks[id]=type;state.submitted=false;renderGames(target);updateStats();renderParlays();});if(target==="allGames"){$("pickCountBadge").textContent=`${Object.keys(state.picks).length} of ${state.required} selected`;$("pickSummaryText").textContent=Object.keys(state.picks).length?Object.entries(state.picks).map(([id,type])=>{const g=games.find(x=>x.id==id);return predictionLabel(g,type)}).join(" · "):"No picks selected yet."}}
+
+async function saveRealPick(gameId,type){
+ const {data:sessionData}=await supabaseClient.auth.getSession();
+ const user=sessionData.session?.user;
+
+ if(!user){
+  toast('Please sign in to save picks.');
+  return false;
+ }
+
+ if(!activeLeagueId){
+  toast('Select a league first.');
+  return false;
+ }
+
+ const {data:weeks,error:weekError}=await supabaseClient
+  .from('weeks')
+  .select('id,week_number')
+  .eq('league_id',activeLeagueId)
+  .order('week_number',{ascending:true});
+
+ if(weekError||!weeks?.length){
+  toast('Could not find the league week.');
+  return false;
+ }
+
+ const week=weeks[0];
+ const game=games.find(g=>g.id==gameId);
+
+ if(!game){
+  toast('Game not found.');
+  return false;
+ }
+
+ const {data:existing,error:findError}=await supabaseClient
+  .from('picks')
+  .select('id')
+  .eq('league_id',activeLeagueId)
+  .eq('week_id',week.id)
+  .eq('game_id',gameId)
+  .eq('user_id',user.id)
+  .maybeSingle();
+
+ if(findError){
+  toast('Could not check existing pick: '+findError.message);
+  return false;
+ }
+
+ if(existing){
+  const {error}=await supabaseClient
+   .from('picks')
+   .update({
+    pick:({win:'favorite_win',cover:'favorite_cover',dog:'underdog_win'})[type],
+    spread_at_pick:game.spread,
+    favorite_at_pick:game.favorite,
+    submitted_at:new Date().toISOString()
+   })
+   .eq('id',existing.id);
+
+  if(error){
+   toast('Could not update pick: '+error.message);
+   return false;
+  }
+ }else{
+  const {error}=await supabaseClient
+   .from('picks')
+   .insert({
+    league_id:activeLeagueId,
+    week_id:week.id,
+    game_id:gameId,
+    user_id:user.id,
+    pick:({win:'favorite_win',cover:'favorite_cover',dog:'underdog_win'})[type],
+    spread_at_pick:game.spread,
+    favorite_at_pick:game.favorite,
+    submitted_at:new Date().toISOString()
+   });
+
+  if(error){
+   toast('Could not save pick: '+error.message);
+   return false;
+  }
+ }
+
+ toast('Pick saved.');
+ return true;
+}
+
+ function renderGames(target="allGames"){const list=target==="featuredGames"?games.slice(0,2):games.filter(g=>state.filter==="All"||g.league===state.filter);$(target).innerHTML=list.map(gameCard).join("");$(target).querySelectorAll("[data-pick]").forEach(b=>b.onclick=async()=>{
+ const [id,type]=b.dataset.pick.split(":");
+ const previous=state.picks[id];
+
+ if(previous===type){
+  toast('Pick removal is not connected yet.');
+  return;
+ }
+
+ const saved=await saveRealPick(id,type);
+ if(!saved)return;
+
+ state.picks[id]=type;
+ state.submitted=false;
+ renderGames(target);
+ updateStats();
+ renderParlays();
+});if(target==="allGames"){$("pickCountBadge").textContent=`${Object.keys(state.picks).length} of ${state.required} selected`;$("pickSummaryText").textContent=Object.keys(state.picks).length?Object.entries(state.picks).map(([id,type])=>{const g=games.find(x=>x.id==id);return predictionLabel(g,type)}).join(" · "):"No picks selected yet."}}
 function updateStats(){const n=Object.keys(state.picks).length;$("statPicks").textContent=`${n} / ${state.required}`;$("statParlays").textContent=state.parlays.length;$("statPoints").textContent=Object.values(state.picks).reduce((sum,t)=>sum+pointsFor(t),0);$("scoreWin").textContent=state.win+" pt"+(state.win===1?"":"s");$("scoreCover").textContent=state.cover+" pts";$("scoreDog").textContent=state.dog+" pts";$("leagueCode").textContent=state.code;$("parlayCountBadge").textContent=`${state.parlays.length} parlay${state.parlays.length===1?"":"s"}`}
 $("filterAll").onclick=()=>setFilter("All");$("filterNfl").onclick=()=>setFilter("NFL");$("filterNcaa").onclick=()=>setFilter("NCAA");function setFilter(f){state.filter=f;["filterAll","filterNfl","filterNcaa"].forEach((id,i)=>$(id).className=(["All","NFL","NCAA"][i]===f?"btn secondary":"btn ghost"));renderGames()}
 $("submitPicks").onclick=()=>{const n=Object.keys(state.picks).length;if(n<state.required){toast(`Choose at least ${state.required} picks before submitting.`);return}state.submitted=true;toast("Picks submitted in this browser prototype.");updateStats();};
