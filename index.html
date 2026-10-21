@@ -195,7 +195,53 @@ async function saveRealPick(gameId,type){
   toast('Please sign in to save picks.');
   return false;
  }
+async function loadRealPicks(){
+ const {data:sessionData}=await supabaseClient.auth.getSession();
+ const user=sessionData.session?.user;
 
+ if(!user||!activeLeagueId)return;
+
+ const {data:weeks,error:weekError}=await supabaseClient
+  .from('weeks')
+  .select('id,week_number')
+  .eq('league_id',activeLeagueId)
+  .order('week_number',{ascending:true});
+
+ if(weekError||!weeks?.length){
+  toast('Could not load your saved picks.');
+  return;
+ }
+
+ const week=weeks[0];
+
+ const {data:rows,error}=await supabaseClient
+  .from('picks')
+  .select('game_id,pick')
+  .eq('league_id',activeLeagueId)
+  .eq('week_id',week.id)
+  .eq('user_id',user.id);
+
+ if(error){
+  toast('Could not load saved picks: '+error.message);
+  return;
+ }
+
+ state.picks={};
+
+ (rows||[]).forEach(row=>{
+  const typeMap={
+   favorite_win:'win',
+   favorite_cover:'cover',
+   underdog_win:'dog'
+  };
+  state.picks[row.game_id]=typeMap[row.pick];
+ });
+
+ renderGames('featuredGames');
+ renderGames();
+ renderParlays();
+ updateStats();
+}
  if(!activeLeagueId){
   toast('Select a league first.');
   return false;
@@ -333,9 +379,10 @@ box.querySelectorAll('[data-select-league]').forEach(b=>b.onclick=async()=>{
   state.maxParlays=selected.max_parlays;
   $("realLeagueStatus").textContent='Selected league: '+selected.name;
  }
- await loadRealGames();
- await loadRealLeagues();
- toast('League selected.');
+await loadRealGames();
+await loadRealPicks();
+await loadRealLeagues();
+toast('League selected.'); 
 });
 
 }
