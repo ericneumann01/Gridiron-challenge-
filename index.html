@@ -491,7 +491,7 @@
     if (!ui.activeLeague) { status('standingsStatus','Select a league first.'); return; }
     status('standingsStatus','Calculating standings…');
     const {data:members,error:memberError}=await supabase.from('league_members')
-      .select('user_id,role,profiles(display_name,full_name,username)').eq('league_id',ui.activeLeague.id);
+      .select('user_id,role').eq('league_id',ui.activeLeague.id);
     if (memberError) { status('standingsStatus','Could not load members: '+memberError.message,'error'); return; }
     const {data:picks,error:picksError}=await supabase.from('picks').select('user_id,week_id,game_id,pick,submitted_at,games(away_score,home_score,away_team,home_team,favorite_team,spread,sport)')
       .eq('league_id',ui.activeLeague.id);
