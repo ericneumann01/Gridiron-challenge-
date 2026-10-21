@@ -1,479 +1,564 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#10251d">
-<meta name="description" content="Gridiron Challenge football picks league prototype">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<link rel="manifest" href="manifest.json">
-<title>Gridiron Challenge</title>
-<style>
-:root{--bg:#f3f5f2;--card:#fff;--ink:#17231d;--muted:#68756d;--green:#173e2d;--green2:#2f7251;--gold:#e7b64c;--line:#dfe6df;--red:#a83b3b;--shadow:0 6px 22px rgba(20,45,32,.07)}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-button,input,select{font:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #82b9a0;outline-offset:2px}
-.top{background:linear-gradient(120deg,#10251d,#1b5138);color:white;padding:22px max(18px,calc((100vw - 1100px)/2));padding-bottom:20px}
-.brand{display:flex;align-items:center;gap:12px}.logo{width:44px;height:44px;border-radius:13px;background:var(--gold);color:#173e2d;display:grid;place-items:center;font-weight:900;font-size:22px}.brand h1{font-size:21px;margin:0;letter-spacing:.2px}.brand p{margin:2px 0 0;color:#c9dbd0;font-size:12px}
-.topline{display:flex;justify-content:space-between;gap:15px;align-items:center;flex-wrap:wrap}.season-pill{border:1px solid #537563;color:#e5f0e8;border-radius:999px;padding:7px 11px;font-size:12px}
-.nav{display:flex;gap:8px;overflow:auto;padding:14px max(14px,calc((100vw - 1100px)/2));background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
-.nav button{border:0;background:transparent;color:var(--muted);padding:9px 13px;border-radius:10px;white-space:nowrap;font-weight:650}.nav button.active{background:#e4eee7;color:var(--green)}
-main{max-width:1100px;margin:0 auto;padding:20px 16px 50px}.row{display:grid;grid-template-columns:1.6fr 1fr;gap:16px}.panel,.stat,.game,.parlaybox{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}.panel{padding:18px;margin-bottom:16px}.panel h2{font-size:18px;margin:0 0 5px}.sub{color:var(--muted);font-size:13px;margin:0 0 15px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0}.stat{padding:14px}.stat span{display:block;color:var(--muted);font-size:12px}.stat strong{display:block;font-size:24px;margin-top:5px}
-.sectionhead{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:5px 0 14px}.sectionhead h2{margin:0;font-size:20px}.btn{border:0;background:var(--green);color:white;border-radius:10px;padding:10px 14px;font-weight:700}.btn.secondary{background:#e6eee8;color:var(--green)}.btn.ghost{background:white;color:var(--green);border:1px solid var(--line)}.btn.danger{background:#f8e7e7;color:var(--red)}.btn:disabled{opacity:.4;cursor:not-allowed}
-.badge{display:inline-block;border-radius:999px;padding:4px 8px;background:#edf2ee;color:#456050;font-size:11px;font-weight:750}.badge.gold{background:#fff2ce;color:#75551a}.muted{color:var(--muted)}.small{font-size:12px}
-.game-list{display:grid;gap:12px}.game{padding:15px}.gamehead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}.gamehead .meta{font-size:12px;color:var(--muted)}.teams{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px}.team{font-weight:800;font-size:16px}.team:last-child{text-align:right}.vs{color:#99a39b;font-size:11px;font-weight:800}.spreadline{font-size:12px;color:var(--muted);margin-top:4px}.pickopts{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:14px}.pickopt{border:1px solid var(--line);background:#fff;color:#35463b;padding:9px 6px;border-radius:10px;font-size:12px;font-weight:700}.pickopt.selected{border-color:var(--green2);background:#e6f1e9;color:var(--green);box-shadow:inset 0 0 0 1px var(--green2)}.pickopt small{display:block;font-weight:500;margin-top:3px;color:var(--muted);font-size:10px}
-input,select{border:1px solid #ccd7ce;border-radius:10px;padding:10px 11px;background:white;color:var(--ink);width:100%}label{display:block;font-size:12px;font-weight:750;margin-bottom:6px;color:#48584d}.field{margin-bottom:13px}.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.tablewrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:420px}th,td{text-align:left;padding:11px 9px;border-bottom:1px solid var(--line)}th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}td strong{font-size:14px}.rank{color:var(--muted);width:30px}.yourow{background:#f0f6f1}.empty{padding:25px;text-align:center;color:var(--muted);border:1px dashed #cbd7ce;border-radius:12px}
-.picksummary{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;background:#edf4ef;border-radius:12px;padding:12px 14px;margin-bottom:13px}.pillrow{display:flex;gap:6px;flex-wrap:wrap}.pill{background:#e9eee9;border-radius:999px;padding:6px 9px;font-size:12px}
-.parlaybox{padding:14px;margin-top:12px}.parlaytitle{display:flex;justify-content:space-between;align-items:center;gap:10px}.leg{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}.leg:last-child{border-bottom:0}
-.notice{padding:12px 14px;border-radius:12px;background:#fff5d9;color:#6d541b;font-size:13px;margin-bottom:16px}.success{background:#e5f2e8;color:#285c3b}.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#172a20;color:white;padding:12px 17px;border-radius:12px;box-shadow:var(--shadow);z-index:20;display:none;max-width:90vw}
-.footer{text-align:center;color:var(--muted);font-size:11px;padding:10px 15px 28px}.hide{display:none!important}
-@media(max-width:760px){.row{grid-template-columns:1fr}.stats{gap:7px}.stat{padding:11px}.stat strong{font-size:21px}.pickopts{gap:5px}.pickopt{padding:9px 3px;font-size:11px}.formgrid{grid-template-columns:1fr}.top{padding-top:18px}.panel{padding:15px}.team{font-size:14px}}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101a2c">
+  <title>Gridiron Challenge</title>
+  <style>
+    :root{--bg:#0b1220;--panel:#121e31;--panel2:#17263d;--line:#2a3a54;--text:#edf3fc;--muted:#a7b6cb;--accent:#65d6a5;--accent2:#9ce9c5;--danger:#ff8b8b;--warn:#ffd27d;--shadow:0 14px 36px #0003}
+    *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#101a2c 0,#0b1220 420px);color:var(--text);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}button,input,select{font:inherit}button{cursor:pointer}button:disabled{opacity:.45;cursor:not-allowed}a{color:var(--accent)}
+    .wrap{max-width:1180px;margin:auto;padding:20px}.top{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;padding:10px 0 20px}.brand{display:flex;gap:12px;align-items:center}.logo{display:grid;place-items:center;width:48px;height:48px;border-radius:14px;background:var(--accent);color:#092017;font-weight:900;font-size:22px}.brand h1{font-size:23px;line-height:1.15;margin:0}.brand p{margin:4px 0 0;color:var(--muted);font-size:13px}.top-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .nav{display:flex;gap:7px;flex-wrap:wrap;padding:10px 0 18px;border-bottom:1px solid var(--line);margin-bottom:20px}.nav button,.btn{border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:10px;padding:9px 13px}.nav button.active,.btn.primary{background:var(--accent);color:#092017;border-color:var(--accent);font-weight:750}.btn.ghost{background:transparent}.btn.danger{border-color:#703c4a;color:#ffc2c2;background:#321d2a}.btn.small{padding:6px 9px;font-size:13px}
+    .grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px}.span12{grid-column:span 12}.span8{grid-column:span 8}.span7{grid-column:span 7}.span6{grid-column:span 6}.span5{grid-column:span 5}.span4{grid-column:span 4}
+    .panel{background:linear-gradient(160deg,var(--panel),#101a2a);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:var(--shadow);min-width:0}.panel h2{font-size:18px;margin:0 0 12px}.panel h3{font-size:16px;margin:0 0 8px}.muted,.small{color:var(--muted)}.small{font-size:13px}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.between{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.stack{display:grid;gap:12px}.field{display:grid;gap:6px;min-width:0}.field label{font-size:13px;color:var(--muted)}input,select{width:100%;min-width:0;background:#0c1626;border:1px solid var(--line);border-radius:9px;padding:10px 11px;color:var(--text)}input:focus,select:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}.hidden{display:none!important}.status{padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#0d1727;color:var(--muted);white-space:pre-wrap;overflow-wrap:anywhere}.status.error{color:#ffc2c2;border-color:#75424b}.status.good{color:var(--accent2);border-color:#326b56}.pill{font-size:12px;padding:3px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}.stat{padding:15px;border-radius:12px;background:#0d1727;border:1px solid var(--line)}.stat strong{font-size:25px;display:block}.stat span{font-size:12px;color:var(--muted)}
+    .game{padding:14px;border:1px solid var(--line);border-radius:13px;background:#0e192a;display:grid;gap:12px}.game-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.teams{font-weight:750;font-size:16px}.game-meta{font-size:12px;color:var(--muted);margin-top:4px}.pick-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.pick{border:1px solid var(--line);border-radius:9px;background:#15243a;color:var(--text);padding:9px 7px;text-align:center;font-size:13px;min-height:46px}.pick.selected{border-color:var(--accent);background:#173b32;box-shadow:inset 0 0 0 1px var(--accent)}.pick .sub{display:block;font-size:11px;color:var(--muted)}.pick.selected .sub{color:#b8f1d7}
+    .league-card{border:1px solid var(--line);background:#0d1727;padding:13px;border-radius:12px;display:grid;gap:8px}.league-card.selected{border-color:var(--accent)}.divider{height:1px;background:var(--line);margin:5px 0}.empty{padding:22px;border:1px dashed var(--line);border-radius:12px;color:var(--muted);text-align:center}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:500px}th,td{text-align:left;padding:10px;border-bottom:1px solid var(--line)}th{font-size:12px;color:var(--muted);font-weight:600}.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);max-width:calc(100% - 28px);background:#e9fff4;color:#10251c;border-radius:12px;padding:12px 16px;box-shadow:var(--shadow);z-index:99;font-weight:700}.footer{padding:26px 0;color:var(--muted);font-size:12px;text-align:center}.tag{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);font-weight:800}
+    @media(max-width:780px){.span8,.span7,.span6,.span5,.span4{grid-column:span 12}.wrap{padding:13px}.panel{padding:14px}.pick-options{grid-template-columns:1fr}.pick{text-align:left}.brand h1{font-size:20px}.game-top{flex-direction:column}.top{align-items:flex-start}}
+  </style>
 </head>
 <body>
-<header class="top">
- <div class="topline">
-  <div class="brand"><div class="logo">G</div><div><h1>Gridiron Challenge</h1><p>Pick smart. Compete all season.</p></div></div>
-  <div class="season-pill">🏈 Prototype · Sample games</div>
- </div>
-</header>
-<nav class="nav" aria-label="Main navigation">
- <button class="active" data-tab="dashboard">Dashboard</button><button data-tab="picks">Weekly Picks</button><button data-tab="parlays">Parlay Builder</button><button data-tab="standings">Standings</button><button data-tab="league">League Settings</button>
-</nav>
-<main>
- <section id="auth-panel" class="panel">
-  <h2>Player account</h2>
-  <p class="sub">Create an account or sign in to begin connecting your Gridiron Challenge profile.</p>
-  <div id="auth-status" class="notice">Not signed in. Your demo picks remain local to this browser.</div>
-  <div id="auth-form">
-   <div class="formgrid">
-    <div class="field"><label for="auth-name">Display name (for new accounts)</label><input id="auth-name" autocomplete="nickname" placeholder="Your display name"></div>
-    <div class="field"><label for="auth-email">Email</label><input id="auth-email" type="email" autocomplete="email" placeholder="you@example.com"></div>
-   </div>
-   <div class="field"><label for="auth-password">Password</label><input id="auth-password" type="password" autocomplete="current-password" minlength="8" placeholder="At least 8 characters"></div>
-   <div style="display:flex;gap:8px;flex-wrap:wrap">
-    <button class="btn" id="sign-in">Sign in</button>
-    <button class="btn secondary" id="sign-up">Create account</button>
-    <button class="btn ghost hide" id="sign-out">Sign out</button>
-   </div>
-   <p class="small muted" style="margin-top:10px">Use an email address you can access. Supabase may send a confirmation email before allowing sign-in.</p>
-  </div>
- </section>
- <section id="view-dashboard">
-  <div class="sectionhead"><div><h2>Welcome to the league</h2><p class="sub">Your football weekend, all in one place.</p></div><button class="btn" id="quickPicks">Make weekly picks →</button></div>
-  <div class="notice">This prototype uses fictional/sample matchups. Supabase authentication is connected; picks and league settings are still demo data stored in this browser, not shared across players.</div>
-  <div class="stats">
-   <div class="stat"><span>Your picks selected</span><strong id="statPicks">0 / 4</strong></div>
-   <div class="stat"><span>Parlays created</span><strong id="statParlays">0</strong></div>
-   <div class="stat"><span>Your weekly points</span><strong id="statPoints">0</strong></div>
-  </div>
-  <div class="row">
-   <div class="panel"><h2>Featured matchups</h2><p class="sub">Select a game to make your prediction.</p><div id="featuredGames" class="game-list"></div></div>
-   <div>
-    <div class="panel"><h2>League overview</h2><p class="sub">Gridiron Challenge Classic · Week 7</p>
-     <div class="pillrow"><span class="pill">NFL + NCAA</span><span class="pill">4 picks required</span><span class="pill">Parlays optional</span></div>
-     <hr style="border:0;border-top:1px solid var(--line);margin:16px 0">
-     <p class="small muted">Scoring rules</p>
-     <div class="leg"><span>Favorite wins</span><strong id="scoreWin">1 pt</strong></div>
-     <div class="leg"><span>Favorite covers</span><strong id="scoreCover">2 pts</strong></div>
-     <div class="leg"><span>Underdog wins</span><strong id="scoreDog">3 pts</strong></div>
-     <p class="small muted" style="margin-top:14px">League code: <strong id="leagueCode">GRID7K</strong></p>
-     <button class="btn secondary" id="copyCode">Copy invite code</button>
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><div class="logo">GC</div><div><h1>Gridiron Challenge</h1><p>Pick smart. Compete all season.</p></div></div>
+    <div class="top-actions"><span id="authLabel" class="pill">Not signed in</span><button id="signOutBtn" class="btn ghost hidden">Sign out</button></div>
+  </header>
+
+  <section id="authPanel" class="panel stack" style="margin-bottom:18px">
+    <div><div class="tag">Your football picks league</div><h2 style="margin-top:4px">Sign in to play</h2><p class="muted">Use your existing Gridiron Challenge account, or create one.</p></div>
+    <div class="grid">
+      <div class="field span4"><label for="authEmail">Email</label><input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com"></div>
+      <div class="field span4"><label for="authPassword">Password</label><input id="authPassword" type="password" autocomplete="current-password" placeholder="Password"></div>
+      <div class="field span4"><label for="authName">Display name (for new accounts)</label><input id="authName" autocomplete="name" placeholder="Your name"></div>
     </div>
-    <div class="panel"><h2>Quick links</h2><div style="display:grid;gap:8px"><button class="btn ghost" data-goto="standings">View leaderboard</button><button class="btn ghost" data-goto="league">Customize scoring</button></div></div>
-   </div>
-  </div>
- </section>
- <section id="view-picks" class="hide">
-  <div class="sectionhead"><div><h2>Weekly matchup board</h2><p class="sub">Choose one prediction per game. You need 4 picks this week.</p></div><span class="badge gold" id="pickCountBadge">0 of 4 selected</span></div>
-  <div class="picksummary"><div><strong>Your selections</strong><div class="small muted" id="pickSummaryText">No picks selected yet.</div></div><button class="btn" id="submitPicks">Submit picks</button></div>
-  <div class="pillrow" style="margin-bottom:13px"><button class="btn secondary" id="filterAll">All games</button><button class="btn ghost" id="filterNfl">NFL</button><button class="btn ghost" id="filterNcaa">NCAA</button></div>
-  <div id="allGames" class="game-list"></div>
- </section>
- <section id="view-parlays" class="hide">
-  <div class="sectionhead"><div><h2>Parlay builder</h2><p class="sub">Add at least 2 of your individual picks to create a parlay.</p></div><span class="badge" id="parlayCountBadge">0 parlays</span></div>
-  <div class="row">
-   <div class="panel"><h2>Build a parlay</h2><p class="sub">Choose from your existing picks. The prototype awards a configurable bonus if every leg succeeds.</p><div id="parlayPickOptions"></div><div class="field" style="margin-top:14px"><label for="parlayName">Parlay name (optional)</label><input id="parlayName" placeholder="e.g. Saturday underdogs"></div><button class="btn" id="createParlay">Create parlay</button></div>
-   <div class="panel"><h2>Your parlays</h2><p class="sub">Review the legs in each parlay.</p><div id="parlayList"></div></div>
-  </div>
- </section>
- <section id="view-standings" class="hide">
-  <div class="sectionhead"><div><h2>League standings</h2><p class="sub">Sample weekly leaderboard. Your score updates as you make picks.</p></div><span class="badge">Week 7</span></div>
-  <div class="panel"><div class="tablewrap"><table><thead><tr><th>#</th><th>Player</th><th>Week points</th><th>Season points</th><th>Weekly wins</th></tr></thead><tbody id="standingsBody"></tbody></table></div></div>
- </section>
- <section id="view-league" class="hide">
-  <div class="sectionhead"><div><h2>League settings</h2><p class="sub">Manage real leagues connected to your Supabase account.</p></div><span class="badge">Manager view</span></div>
-  <div class="row">
-   <div class="panel"><h2>League details</h2><div class="field"><label for="leagueNameInput">League name</label><input id="leagueNameInput" value="Gridiron Challenge Classic"></div><div class="formgrid"><div class="field"><label for="requiredPicks">Required weekly picks</label><input id="requiredPicks" type="number" min="1" max="12" value="4"></div><div class="field"><label for="parlayMax">Maximum parlays per player</label><input id="parlayMax" type="number" min="0" max="5" value="2"></div></div>
-    <div class="formgrid"><div class="field"><label for="pointsWin">Favorite wins (points)</label><input id="pointsWin" type="number" min="0" max="20" value="1"></div><div class="field"><label for="pointsCover">Favorite covers (points)</label><input id="pointsCover" type="number" min="0" max="20" value="2"></div></div>
-    <div class="formgrid"><div class="field"><label for="pointsDog">Underdog wins outright (points)</label><input id="pointsDog" type="number" min="0" max="20" value="3"></div><div class="field"><label for="parlayBonus">All legs correct bonus (points)</label><input id="parlayBonus" type="number" min="0" max="50" value="4"></div></div>
-    <div class="field"><label for="visibility">Pick visibility</label><select id="visibility"><option>Hidden until deadline</option><option>Public immediately</option><option>Manager configurable</option></select></div>
-    <div class="field"><label for="deadlineRule">Missed deadline rule</label><select id="deadlineRule"><option>No points for missing picks</option><option>Use saved picks</option><option>Lock each game at kickoff</option></select></div>
-    <button class="btn" id="saveSettings">Save league settings</button>
-   </div>
-   <div class="panel"><h2>My real leagues</h2><p class="sub">Create a league or join one with a manager's invitation code.</p><div class="field"><label for="realLeagueName">New league name</label><input id="realLeagueName" placeholder="e.g. Family Football Picks"></div><div class="formgrid"><div class="field"><label for="realRequiredPicks">Required weekly picks</label><input id="realRequiredPicks" type="number" min="1" max="32" value="4"></div><div class="field"><label for="realMaxParlays">Maximum parlays</label><input id="realMaxParlays" type="number" min="0" max="5" value="2"></div></div><button class="btn" id="createRealLeague">Create real league</button><hr style="border:0;border-top:1px solid var(--line);margin:20px 0"><div class="field"><label for="joinCode">Join using invitation code</label><input id="joinCode" placeholder="Enter league code"></div><button class="btn secondary" id="joinLeague">Join league</button><div id="realLeagueStatus" class="notice" style="margin-top:14px">Sign in to create or join a league.</div><h3 style="margin-top:18px">Your leagues</h3><div id="realLeagueList" class="game-list"><div class="empty">Your connected leagues will appear here.</div></div></div>
-  </div>
- </section>
-</main>
-<div class="footer">Gridiron Challenge · Early interactive prototype · Fictional matchups and sample leaderboard</div>
-<div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <div class="row"><button id="signInBtn" class="btn primary">Sign in</button><button id="signUpBtn" class="btn">Create account</button></div>
+    <div id="authStatus" class="status">Connect to Supabase to begin.</div>
+  </section>
+
+  <nav id="mainNav" class="nav hidden" aria-label="Main navigation">
+    <button class="active" data-tab="dashboard">Dashboard</button><button data-tab="picks">Weekly picks</button><button data-tab="parlays">Parlay builder</button><button data-tab="standings">Standings</button><button data-tab="settings">League settings</button>
+  </nav>
+
+  <main id="appMain" class="hidden">
+    <section id="tab-dashboard" class="grid">
+      <div class="panel span8">
+        <div class="between"><div><div class="tag">Current league</div><h2 id="dashLeagueName">Select a league</h2><p id="dashSub" class="muted">Create or join a league to get started.</p></div><span id="weekPill" class="pill">No week selected</span></div>
+        <div class="grid" style="margin-top:16px">
+          <div class="span4 stat"><strong id="statPicks">0 / 0</strong><span>Picks selected</span></div><div class="span4 stat"><strong id="statParlays">0</strong><span>Parlays saved</span></div><div class="span4 stat"><strong id="statPoints">0</strong><span>Potential pick points*</span></div>
+        </div>
+        <p class="small" style="margin:12px 0 0">*Potential points use your league's scoring settings; final standings depend on actual game results.</p>
+      </div>
+      <div class="panel span4 stack">
+        <h2>League access</h2>
+        <div class="field"><label for="newLeagueName">New league name</label><input id="newLeagueName" placeholder="Friday Night Picks"></div>
+        <div class="grid"><div class="field span6"><label for="newRequired">Required picks</label><input id="newRequired" type="number" min="1" max="32" value="4"></div><div class="field span6"><label for="newMaxParlays">Max parlays</label><input id="newMaxParlays" type="number" min="0" max="5" value="2"></div></div>
+        <button id="createLeagueBtn" class="btn primary">Create league</button>
+        <div class="divider"></div>
+        <div class="field"><label for="joinCode">Invitation code</label><input id="joinCode" placeholder="Enter code"></div><button id="joinLeagueBtn" class="btn">Join league</button>
+        <div id="leagueStatus" class="status">Sign in to create or join a league.</div>
+      </div>
+      <div class="panel span12">
+        <div class="between"><h2>Your leagues</h2><button id="refreshBtn" class="btn ghost small">Refresh</button></div>
+        <div id="leagueList" class="grid"><div class="empty span12">Sign in to load your leagues.</div></div>
+      </div>
+      <div class="panel span12"><div class="between"><h2>Games this week</h2><button class="btn small" data-goto="picks">Make picks</button></div><div id="featuredGames" class="grid"><div class="empty span12">Select a league to load its games.</div></div></div>
+    </section>
+
+    <section id="tab-picks" class="hidden stack">
+      <div class="panel">
+        <div class="between"><div><h2>Weekly picks</h2><p class="muted">Choose one prediction per game. Your selection saves to the active league.</p></div><span id="pickCount" class="pill">0 picks</span></div>
+        <div class="row" style="margin:12px 0"><button class="btn small filter active" data-filter="All">All games</button><button class="btn small filter" data-filter="NFL">NFL</button><button class="btn small filter" data-filter="NCAA">NCAA</button><label class="small">Week <select id="weekSelect" style="width:auto;display:inline-block;margin-left:5px"><option value="">Select league first</option></select></label></div>
+        <div id="pickStatus" class="status">Select a league to load games.</div>
+        <div id="allGames" class="grid" style="margin-top:14px"><div class="empty span12">No games loaded.</div></div>
+        <div class="row" style="margin-top:16px"><button id="submitPicksBtn" class="btn primary">Submit weekly picks</button><button id="reloadPicksBtn" class="btn">Reload saved picks</button></div>
+        <p class="small">Picks can be changed until the week locks. The database must enforce lock times for authoritative protection.</p>
+      </div>
+    </section>
+
+    <section id="tab-parlays" class="grid hidden">
+      <div class="panel span5 stack"><h2>Create a parlay</h2><p class="muted">Choose at least two of your saved picks as legs.</p><div class="field"><label for="parlayName">Parlay name (optional)</label><input id="parlayName" placeholder="Sunday upset special"></div><div id="parlayOptions" class="stack"><div class="empty">Make picks first.</div></div><button id="createParlayBtn" class="btn primary">Save parlay</button><div id="parlayStatus" class="status">Parlays are stored in your league.</div></div>
+      <div class="panel span7"><div class="between"><h2>Your parlays</h2><span id="parlayCount" class="pill">0 saved</span></div><div id="parlayList" class="stack"><div class="empty">No parlays loaded.</div></div></div>
+    </section>
+
+    <section id="tab-standings" class="hidden stack">
+      <div class="panel"><div class="between"><div><h2>League standings</h2><p class="muted">Calculated from submitted picks and stored game results where available.</p></div><button id="refreshStandingsBtn" class="btn small">Refresh standings</button></div><div id="standingsStatus" class="status">Select a league.</div><div class="table-wrap" style="margin-top:12px"><table><thead><tr><th>Rank</th><th>Player</th><th>Week points</th><th>Season points</th><th>Correct picks</th></tr></thead><tbody id="standingsBody"><tr><td colspan="5" class="muted">No standings loaded.</td></tr></tbody></table></div></div>
+    </section>
+
+    <section id="tab-settings" class="grid hidden">
+      <div class="panel span6 stack"><h2>League settings</h2><p class="muted">Only a league manager should be able to change these values. Database permissions remain authoritative.</p>
+        <div class="field"><label for="settingsName">League name</label><input id="settingsName"></div>
+        <div class="grid"><div class="field span6"><label for="settingsRequired">Required weekly picks</label><input id="settingsRequired" type="number" min="1" max="32"></div><div class="field span6"><label for="settingsMaxParlays">Maximum parlays</label><input id="settingsMaxParlays" type="number" min="0" max="5"></div></div>
+        <div class="grid"><div class="field span4"><label for="pointsWin">Favorite wins</label><input id="pointsWin" type="number" min="0" max="100" value="1"></div><div class="field span4"><label for="pointsCover">Favorite covers</label><input id="pointsCover" type="number" min="0" max="100" value="2"></div><div class="field span4"><label for="pointsDog">Underdog wins outright</label><input id="pointsDog" type="number" min="0" max="100" value="3"></div></div>
+        <div class="field"><label for="parlayBonus">All-legs-correct parlay bonus</label><input id="parlayBonus" type="number" min="0" max="100" value="4"></div>
+        <button id="saveSettingsBtn" class="btn primary">Save settings</button><div id="settingsStatus" class="status">Select a league.</div>
+      </div>
+      <div class="panel span6 stack"><h2>Eligibility and weekly setup</h2><p class="muted">This version uses games already assigned to the selected week in the existing <code>week_games</code> table. Your current game-import Edge Function remains separate.</p><div class="status">To add league-specific NFL/NCAA availability filters or conference restrictions, the app needs a league-game eligibility schema and a manager interface. Those are not assumed to exist in your current database.</div><h3>Invite code</h3><div class="row"><strong id="settingsInviteCode">—</strong><button id="copyInviteBtn" class="btn small">Copy code</button></div><h3>Week deadline</h3><div id="deadlineInfo" class="status">No deadline loaded.</div></div>
+    </section>
+  </main>
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+  <footer class="footer">Gridiron Challenge · Pick smart. Compete all season.</footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-let games = [
- {id:1,league:"NFL",away:"Kansas City",home:"Denver",favorite:"Kansas City",spread:3.5,time:"Sun · 12:00 PM CT",status:"Upcoming"},
- {id:2,league:"NFL",away:"Detroit",home:"Chicago",favorite:"Detroit",spread:5.5,time:"Sun · 3:25 PM CT",status:"Upcoming"},
- {id:3,league:"NFL",away:"Cincinnati",home:"Cleveland",favorite:"Cincinnati",spread:7,time:"Sun · 12:00 PM CT",status:"Upcoming"},
- {id:4,league:"NFL",away:"San Francisco",home:"Seattle",favorite:"Seattle",spread:2.5,time:"Sun · 3:05 PM CT",status:"Upcoming"},
- {id:5,league:"NCAA",away:"Nebraska",home:"Iowa",favorite:"Iowa",spread:4.5,time:"Sat · 6:30 PM CT",status:"Upcoming"},
- {id:6,league:"NCAA",away:"Oregon",home:"Wisconsin",favorite:"Oregon",spread:10.5,time:"Sat · 2:30 PM CT",status:"Upcoming"},
- {id:7,league:"NCAA",away:"Army",home:"Navy",favorite:"Navy",spread:1.5,time:"Sat · 11:00 AM CT",status:"Upcoming"},
- {id:8,league:"NCAA",away:"Kansas State",home:"Colorado",favorite:"Kansas State",spread:3,time:"Sat · 7:00 PM CT",status:"Upcoming"}
-];
-// Supabase browser client. The anon/publishable key is intended for client use;
-// database security must be enforced by Row Level Security policies.
-const SUPABASE_URL = "https://andrvwdgvvtbrmksract.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFuZHJ2d2RndnZ0YnJta3NyYWN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE5MjM1MzAsImV4cCI6MjEwNzQ5OTUzMH0.xRhmWDLC-S0ybsdvz5RwSSIf7ZDaU8kzJaKUMMaQUUo";
-const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-const state={leagueName:"Gridiron Challenge Classic",required:4,maxParlays:2,win:1,cover:2,dog:3,bonus:4,visibility:"Hidden until deadline",deadline:"No points for missing picks",picks:{},parlays:[],submitted:false,filter:"All",code:"GRID7K"};
-let activeLeagueId = null;
- const $=id=>document.getElementById(id);
-function showAuthStatus(message, signedIn=false){
- const status=$("auth-status");
- status.textContent=message;
- status.className=signedIn?"notice success":"notice";
- $("sign-in").classList.toggle("hide",signedIn);
- $("sign-up").classList.toggle("hide",signedIn);
- $("sign-out").classList.toggle("hide",!signedIn);
-}
-async function refreshAuth(){
- const {data,error}=await supabaseClient.auth.getSession();
- if(error){showAuthStatus("Could not check sign-in status: "+error.message);return;}
- const user=data.session?.user;
- if(user){
-  const label=user.user_metadata?.display_name || user.email || "Player";
-  showAuthStatus("Signed in as "+label+". Authentication is connected. You can now create and join shared leagues.",true);
- }else{
-  showAuthStatus("Not signed in. Your demo picks remain local to this browser.");
- }
-}
-$("sign-up").onclick=async()=>{
- const name=$("auth-name").value.trim()||"Player";
- const email=$("auth-email").value.trim();
- const password=$("auth-password").value;
- if(!email||password.length<8){toast("Enter a valid email and a password of at least 8 characters.");return;}
- const {data,error}=await supabaseClient.auth.signUp({email,password,options:{data:{display_name:name}}});
- if(error){showAuthStatus("Sign-up failed: "+error.message);return;}
- if(data.session){showAuthStatus("Account created and signed in as "+(data.user?.email||email)+".",true);}
- else{showAuthStatus("Sign-up started. Check "+email+" for a confirmation email, then return here to sign in.");}
-};
-$("sign-in").onclick=async()=>{
- const email=$("auth-email").value.trim();
- const password=$("auth-password").value;
- if(!email||!password){toast("Enter your email and password.");return;}
- const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});
- if(error){showAuthStatus("Sign-in failed: "+error.message);return;}
- showAuthStatus("Signed in as "+(data.user?.email||email)+". Authentication is connected. You can now create and join shared leagues.",true);
-};
-$("sign-out").onclick=async()=>{
- const {error}=await supabaseClient.auth.signOut();
- if(error){showAuthStatus("Sign-out failed: "+error.message);return;}
- showAuthStatus("Signed out.");
-};
-supabaseClient.auth.onAuthStateChange((_event,_session)=>{refreshAuth();loadRealLeagues();});
-function toast(msg){const t=$("toast");t.textContent=msg;t.style.display="block";clearTimeout(toast.timer);toast.timer=setTimeout(()=>t.style.display="none",2600)}
-function setTab(tab){document.querySelectorAll("main section").forEach(s=>s.classList.add("hide"));$("view-"+tab).classList.remove("hide");document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));if(tab==="picks")renderGames();if(tab==="parlays")renderParlays();if(tab==="standings")renderStandings();window.scrollTo({top:0,behavior:"smooth"})}
-document.querySelectorAll(".nav button").forEach(b=>b.addEventListener("click",()=>setTab(b.dataset.tab)));
-document.querySelectorAll("[data-goto]").forEach(b=>b.addEventListener("click",()=>setTab(b.dataset.goto)));
-$("quickPicks").onclick=()=>setTab("picks");
-function predictionLabel(g,type){if(type==="win")return g.favorite+" wins";if(type==="cover")return g.favorite+" covers -"+g.spread;return (g.favorite===g.away?g.home:g.away)+" wins outright"}
-function pointsFor(type){return type==="win"?state.win:type==="cover"?state.cover:state.dog}
-function gameCard(g){const picked=state.picks[g.id];return `<article class="game"><div class="gamehead"><span class="badge">${g.league}</span><span class="meta">${g.time}</span></div><div class="teams"><div><div class="team">${g.away}</div><div class="spreadline">${g.away===g.favorite?"Favorite":"Underdog"}</div></div><div class="vs">VS</div><div><div class="team">${g.home}</div><div class="spreadline">${g.home===g.favorite?"Favorite":"Underdog"}</div></div></div><div class="spreadline" style="margin-top:10px">Favorite: <strong>${g.favorite} -${g.spread}</strong></div><div class="pickopts"><button class="pickopt ${picked==="win"?"selected":""}" data-pick="${g.id}:win">Favorite wins<small>${state.win} point${state.win===1?"":"s"}</small></button><button class="pickopt ${picked==="cover"?"selected":""}" data-pick="${g.id}:cover">Favorite covers<small>${state.cover} points</small></button><button class="pickopt ${picked==="dog"?"selected":""}" data-pick="${g.id}:dog">Underdog wins<small>${state.dog} points</small></button></div></article>`}
+(() => {
+  'use strict';
 
-async function saveRealPick(gameId,type){
- const {data:sessionData}=await supabaseClient.auth.getSession();
- const user=sessionData.session?.user;
+  // IMPORTANT: Keep the URL for your existing Supabase project.
+  // Paste your existing PUBLIC anon/publishable key below. Never put a service_role key here.
+  const SUPABASE_URL = 'https://andrvwdgvvtbrmksract.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_CkD7reJs1LVUmsD-MijFfQ_NqbhMKl_';
 
- if(!user){
-  toast('Please sign in to save picks.');
-  return false;
- }
-async function loadRealPicks(){
- const {data:sessionData}=await supabaseClient.auth.getSession();
- const user=sessionData.session?.user;
-
- if(!user||!activeLeagueId)return;
-
- const {data:weeks,error:weekError}=await supabaseClient
-  .from('weeks')
-  .select('id,week_number')
-  .eq('league_id',activeLeagueId)
-  .order('week_number',{ascending:true});
-
- if(weekError||!weeks?.length){
-  toast('Could not load your saved picks.');
-  return;
- }
-
- const week=weeks[0];
-
- const {data:rows,error}=await supabaseClient
-  .from('picks')
-  .select('game_id,pick')
-  .eq('league_id',activeLeagueId)
-  .eq('week_id',week.id)
-  .eq('user_id',user.id);
-
- if(error){
-  $("realLeagueStatus").textContent='Could not load saved picks: '+error.message;
-  return;
-}
-
-$("realLeagueStatus").textContent='Saved picks found: '+(rows||[]).length;
-
- state.picks={};
-
- (rows||[]).forEach(row=>{
-  const typeMap={
-   favorite_win:'win',
-   favorite_cover:'cover',
-   underdog_win:'dog'
+  const $ = (id) => document.getElementById(id);
+  const ui = {
+    user: null, leagues: [], activeLeague: null, weeks: [], activeWeek: null,
+    games: [], picks: {}, parlays: [], filter: 'All', submitted: false,
+    scoring: { win: 1, cover: 2, dog: 3, bonus: 4 }
   };
-  state.picks[row.game_id]=typeMap[row.pick];
- });
+  let supabase = null;
+  let toastTimer = null;
 
- renderGames('featuredGames');
- renderGames();
- renderParlays();
- updateStats();
-}
- if(!activeLeagueId){
-  toast('Select a league first.');
-  return false;
- }
-
- const {data:weeks,error:weekError}=await supabaseClient
-  .from('weeks')
-  .select('id,week_number')
-  .eq('league_id',activeLeagueId)
-  .order('week_number',{ascending:true});
-
- if(weekError||!weeks?.length){
-  toast('Could not find the league week.');
-  return false;
- }
-
- const week=weeks[0];
- const game=games.find(g=>g.id==gameId);
-
- if(!game){
-  toast('Game not found.');
-  return false;
- }
-
- const {data:existing,error:findError}=await supabaseClient
-  .from('picks')
-  .select('id')
-  .eq('league_id',activeLeagueId)
-  .eq('week_id',week.id)
-  .eq('game_id',gameId)
-  .eq('user_id',user.id)
-  .maybeSingle();
-
- if(findError){
-  toast('Could not check existing pick: '+findError.message);
-  return false;
- }
-
- if(existing){
-  const {error}=await supabaseClient
-   .from('picks')
-   .update({
-    pick:({win:'favorite_win',cover:'favorite_cover',dog:'underdog_win'})[type],
-    spread_at_pick:game.spread,
-    favorite_at_pick:game.favorite,
-    submitted_at:new Date().toISOString()
-   })
-   .eq('id',existing.id);
-
-  if(error){
-   toast('Could not update pick: '+error.message);
-   return false;
+  function toast(message) {
+    $('toast').textContent = message;
+    $('toast').classList.remove('hidden');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => $('toast').classList.add('hidden'), 3200);
   }
- }else{
-  const {error}=await supabaseClient
-   .from('picks')
-   .insert({
-    league_id:activeLeagueId,
-    week_id:week.id,
-    game_id:gameId,
-    user_id:user.id,
-    pick:({win:'favorite_win',cover:'favorite_cover',dog:'underdog_win'})[type],
-    spread_at_pick:game.spread,
-    favorite_at_pick:game.favorite,
-    submitted_at:new Date().toISOString()
-   });
-
-  if(error){
-   toast('Could not save pick: '+error.message);
-   return false;
+  function status(id, message, kind='') {
+    const el = $(id); if (!el) return;
+    el.textContent = message; el.className = 'status' + (kind ? ' ' + kind : '');
   }
- }
-
- toast('Pick saved.');
- return true;
-}
-
- function renderGames(target="allGames"){const list=target==="featuredGames"?games.slice(0,2):games.filter(g=>state.filter==="All"||g.league===state.filter);$(target).innerHTML=list.map(gameCard).join("");$(target).querySelectorAll("[data-pick]").forEach(b=>b.onclick=async()=>{
- const [id,type]=b.dataset.pick.split(":");
- const previous=state.picks[id];
-
- if(previous===type){
-  toast('Pick removal is not connected yet.');
-  return;
- }
-
- const saved=await saveRealPick(id,type);
- if(!saved)return;
-
- state.picks[id]=type;
- state.submitted=false;
- renderGames(target);
- updateStats();
- renderParlays();
-});if(target==="allGames"){$("pickCountBadge").textContent=`${Object.keys(state.picks).length} of ${state.required} selected`;$("pickSummaryText").textContent=Object.keys(state.picks).length?Object.entries(state.picks).map(([id,type])=>{const g=games.find(x=>x.id==id);return predictionLabel(g,type)}).join(" · "):"No picks selected yet."}}
-function updateStats(){const n=Object.keys(state.picks).length;$("statPicks").textContent=`${n} / ${state.required}`;$("statParlays").textContent=state.parlays.length;$("statPoints").textContent=Object.values(state.picks).reduce((sum,t)=>sum+pointsFor(t),0);$("scoreWin").textContent=state.win+" pt"+(state.win===1?"":"s");$("scoreCover").textContent=state.cover+" pts";$("scoreDog").textContent=state.dog+" pts";$("leagueCode").textContent=state.code;$("parlayCountBadge").textContent=`${state.parlays.length} parlay${state.parlays.length===1?"":"s"}`}
-$("filterAll").onclick=()=>setFilter("All");$("filterNfl").onclick=()=>setFilter("NFL");$("filterNcaa").onclick=()=>setFilter("NCAA");function setFilter(f){state.filter=f;["filterAll","filterNfl","filterNcaa"].forEach((id,i)=>$(id).className=(["All","NFL","NCAA"][i]===f?"btn secondary":"btn ghost"));renderGames()}
-$("submitPicks").onclick=()=>{const n=Object.keys(state.picks).length;if(n<state.required){toast(`Choose at least ${state.required} picks before submitting.`);return}state.submitted=true;toast("Picks submitted in this browser prototype.");updateStats();};
-function renderParlays(){const entries=Object.entries(state.picks);$("parlayPickOptions").innerHTML=entries.length?entries.map(([id,type])=>{const g=games.find(x=>x.id==id);return `<label style="display:flex;gap:9px;align-items:flex-start;padding:10px;border:1px solid var(--line);border-radius:10px;margin-bottom:7px"><input type="checkbox" value="${id}" style="width:auto;margin-top:4px"><span><strong>${predictionLabel(g,type)}</strong><br><span class="small muted">${g.league} · ${g.time}</span></span></label>`}).join(""):'<div class="empty">Make individual picks first. Your selections will appear here.</div>';
-$("parlayList").innerHTML=state.parlays.length?state.parlays.map((p,i)=>`<div class="parlaybox"><div class="parlaytitle"><strong>${p.name||"Parlay "+(i+1)}</strong><button class="btn danger small" data-remove="${i}">Remove</button></div><p class="small muted">${p.legs.length} legs · ${state.bonus} bonus points if all legs are correct</p>${p.legs.map(l=>`<div class="leg"><span>${l.label}</span><strong>${l.points} pt</strong></div>`).join("")}</div>`).join(""):'<div class="empty">No parlays yet.</div>';
-$("parlayList").querySelectorAll("[data-remove]").forEach(b=>b.onclick=()=>{state.parlays.splice(+b.dataset.remove,1);renderParlays();updateStats()})}
-$("createParlay").onclick=()=>{if(state.parlays.length>=state.maxParlays){toast(`This league allows at most ${state.maxParlays} parlays.`);return}const ids=[...$("parlayPickOptions").querySelectorAll('input[type="checkbox"]:checked')].map(x=>x.value);if(ids.length<2){toast("Select at least two picks for a parlay.");return}const legs=ids.map(id=>{const g=games.find(x=>x.id===id),type=state.picks[id];return {label:predictionLabel(g,type),points:pointsFor(type),gameId:id,type}});state.parlays.push({name:$("parlayName").value.trim(),legs});$("parlayName").value="";renderParlays();updateStats();toast("Parlay created.")};
-function renderStandings(){const you=Object.values(state.picks).reduce((sum,t)=>sum+pointsFor(t),0);const rows=[{name:"Megan",week:16,season:126,wins:2},{name:"Derek",week:14,season:119,wins:1},{name:"You",week:you,season:104+you,wins:1,you:true},{name:"Chris",week:10,season:98,wins:0},{name:"Jordan",week:8,season:92,wins:0}].sort((a,b)=>b.season-a.season);$("standingsBody").innerHTML=rows.map((r,i)=>`<tr class="${r.you?"yourow":""}"><td class="rank">${i+1}</td><td><strong>${r.name}</strong>${r.you?' <span class="badge">You</span>':""}</td><td>${r.week}</td><td><strong>${r.season}</strong></td><td>${r.wins}</td></tr>`).join("")}
-$("saveSettings").onclick=()=>{state.leagueName=$("leagueNameInput").value.trim()||"My League";state.required=Math.max(1,Math.min(12,+$("requiredPicks").value||4));state.maxParlays=Math.max(0,Math.min(5,+$("parlayMax").value||0));state.win=Math.max(0,+$("pointsWin").value||0);state.cover=Math.max(0,+$("pointsCover").value||0);state.dog=Math.max(0,+$("pointsDog").value||0);state.bonus=Math.max(0,+$("parlayBonus").value||0);state.visibility=$("visibility").value;state.deadline=$("deadlineRule").value;updateStats();renderGames();renderParlays();toast("League settings saved in this browser.");};
-$("copyCode").onclick=async()=>{try{await navigator.clipboard.writeText(state.code);toast("Invite code copied.")}catch{toast("Invite code: "+state.code)}};
-$("joinLeague").onclick=()=>{const c=$("joinCode").value.trim().toUpperCase();toast(c===state.code?"Demo league code accepted. Real joining comes later.":"No demo league found for that code.")};
-if ($("inviteLink") && $("copyLink")) {
-  $("inviteLink").value = location.href.split("#")[0] + "?join=" + state.code;
-  $("copyLink").onclick = async () => {
-    try {
-      await navigator.clipboard.writeText($("inviteLink").value);
-      toast("Demo invitation link copied.");
-    } catch {
-      toast($("inviteLink").value);
+  function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function showTab(name) {
+    document.querySelectorAll('[data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+    ['dashboard','picks','parlays','standings','settings'].forEach(t => $('tab-'+t).classList.toggle('hidden', t !== name));
+    if (name === 'standings') loadStandings();
+    if (name === 'parlays') { renderParlayOptions(); loadParlays(); }
+  }
+  function needClient() {
+    if (!supabase) { toast('Add your existing Supabase public anon key in index.html first.'); return false; }
+    return true;
+  }
+  function selectedWeekId() { return ui.activeWeek?.id || null; }
+  function getGame(id) { return ui.games.find(g => String(g.id) === String(id)); }
+  function predictionText(game, type) {
+    if (!game) return 'Unknown game';
+    if (type === 'favorite_win') return `${game.favorite || 'Favorite'} to win`;
+    if (type === 'favorite_cover') return `${game.favorite || 'Favorite'} to cover ${spreadText(game.spread)}`;
+    return `${game.underdog || 'Underdog'} to win outright`;
+  }
+  function spreadText(spread) {
+    const n = Number(spread);
+    if (!Number.isFinite(n)) return '';
+    return n > 0 ? `+${n}` : String(n);
+  }
+  function pointsFor(type) {
+    if (type === 'favorite_win') return ui.scoring.win;
+    if (type === 'favorite_cover') return ui.scoring.cover;
+    if (type === 'underdog_win') return ui.scoring.dog;
+    return 0;
+  }
+  function teamLabel(abbr, sport) {
+    const nfl = {ARI:'Arizona Cardinals',ATL:'Atlanta Falcons',BAL:'Baltimore Ravens',BUF:'Buffalo Bills',CAR:'Carolina Panthers',CHI:'Chicago Bears',CIN:'Cincinnati Bengals',CLE:'Cleveland Browns',DAL:'Dallas Cowboys',DEN:'Denver Broncos',DET:'Detroit Lions',GB:'Green Bay Packers',HOU:'Houston Texans',IND:'Indianapolis Colts',JAX:'Jacksonville Jaguars',KC:'Kansas City Chiefs',LV:'Las Vegas Raiders',LAC:'Los Angeles Chargers',LA:'Los Angeles Rams',MIA:'Miami Dolphins',MIN:'Minnesota Vikings',NE:'New England Patriots',NO:'New Orleans Saints',NYG:'New York Giants',NYJ:'New York Jets',PHI:'Philadelphia Eagles',PIT:'Pittsburgh Steelers',SF:'San Francisco 49ers',SEA:'Seattle Seahawks',TB:'Tampa Bay Buccaneers',TEN:'Tennessee Titans',WAS:'Washington Commanders'};
+    return sport === 'NFL' ? (nfl[abbr] || abbr || 'Unknown team') : (abbr || 'Unknown team');
+  }
+  function deriveFavoriteAndDog(row) {
+    const favoriteRaw = row.favorite_team || '';
+    const away = row.away_team || '';
+    const home = row.home_team || '';
+    // Providers may store NFL favorite as abbreviation but team names as full names.
+    const favorite = teamLabel(favoriteRaw, row.sport);
+    let favoriteTeam = favorite;
+    if (favoriteRaw && (favoriteRaw === away || favoriteRaw === home)) favoriteTeam = favoriteRaw;
+    if (row.sport === 'NCAA' && favoriteRaw) favoriteTeam = favoriteRaw;
+    const awayIsFavorite = favoriteTeam === away || favoriteRaw === away || (row.sport === 'NFL' && teamLabel(favoriteRaw,'NFL') === away);
+    const homeIsFavorite = favoriteTeam === home || favoriteRaw === home || (row.sport === 'NFL' && teamLabel(favoriteRaw,'NFL') === home);
+    if (!awayIsFavorite && !homeIsFavorite) {
+      // Preserve the supplied favorite label if provider names cannot be reconciled.
+      return { favorite: favorite, underdog: (favorite === away ? home : away), favoriteSide: null };
     }
-  };
-}
-async function loadRealLeagues(){
- const box=$("realLeagueList"); if(!box)return;
- const {data:sessionData}=await supabaseClient.auth.getSession();
- if(!sessionData.session){box.innerHTML='<div class="empty">Sign in to view your leagues.</div>';return;}
- const {data:members,error}=await supabaseClient.from('league_members').select('role, leagues(id,name,invite_code,required_picks,max_parlays)').order('joined_at',{ascending:false});
- if(error){box.innerHTML='<div class="empty">Could not load leagues: '+escapeHtml(error.message)+'</div>';return;}
- const list=(members||[]).map(m=>({...m,league:m.leagues})).filter(m=>m.league);
- if(!list.length){box.innerHTML='<div class="empty">No leagues yet. Create one above or join with a code.</div>';return;}
- box.innerHTML=list.map(m=>`<article class="game" style="border:1px solid ${activeLeagueId===m.league.id?'var(--accent)':'var(--line)'}"><div class="sectionhead"><h3 style="margin:0">${escapeHtml(m.league.name)}</h3><span class="badge">${m.role==='manager'?'Manager':'Player'}</span></div><p class="small muted">Invite code: <strong>${escapeHtml(m.league.invite_code)}</strong></p><p class="small muted">${m.league.required_picks} picks per week · Up to ${m.league.max_parlays} parlays</p><button class="btn secondary" data-select-league="${m.league.id}">${activeLeagueId===m.league.id?'Selected league':'Select league'}</button> <button class="btn ghost" data-copy-code="${escapeHtml(m.league.invite_code)}">Copy invite code</button></article>`).join('');
- box.querySelectorAll('[data-copy-code]').forEach(b=>b.onclick=async()=>{try{await navigator.clipboard.writeText(b.dataset.copyCode);toast('Invite code copied.')}catch{toast('Invite code: '+b.dataset.copyCode)}});
- 
-box.querySelectorAll('[data-select-league]').forEach(b=>b.onclick=async()=>{
- activeLeagueId=b.dataset.selectLeague;
- const selected=list.find(m=>m.league.id===activeLeagueId)?.league;
- if(selected){
-  state.leagueName=selected.name;
-  state.required=selected.required_picks;
-  state.maxParlays=selected.max_parlays;
-  $("realLeagueStatus").textContent='Selected league: '+selected.name;
- }
-await loadRealGames();
-await loadRealPicks();
-await loadRealLeagues();
-toast('League selected.'); 
-});
+    return { favorite: awayIsFavorite ? away : home, underdog: awayIsFavorite ? home : away, favoriteSide: awayIsFavorite ? 'away' : 'home' };
+  }
+  function mapGame(row) {
+    const teams = deriveFavoriteAndDog(row);
+    return {
+      id: row.id, sport: row.sport || 'NFL', league: row.sport === 'NCAA' ? 'NCAA' : 'NFL',
+      away: row.away_team, home: row.home_team, favorite: teams.favorite,
+      underdog: teams.underdog, favoriteSide: teams.favoriteSide,
+      spread: Number(row.spread) || 0, kickoff_at: row.kickoff_at,
+      time: row.kickoff_at ? new Date(row.kickoff_at).toLocaleString('en-US',{timeZone:'America/Chicago',weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+' CT' : 'Kickoff time TBD',
+      status: row.status || 'Upcoming', away_score: row.away_score, home_score: row.home_score
+    };
+  }
+  function cardHtml(game, featured=false) {
+    const current = ui.picks[String(game.id)];
+    const lock = ui.activeWeek?.picks_lock_at && new Date(ui.activeWeek.picks_lock_at).getTime() <= Date.now();
+    const locked = Boolean(lock) || ui.submitted;
+    const favoriteName = game.favorite || 'Favorite';
+    const dogName = game.underdog || 'Underdog';
+    return `<article class="game ${featured?'span6':'span6'}">
+      <div class="game-top"><div><div class="teams">${escapeHtml(game.away)} @ ${escapeHtml(game.home)}</div><div class="game-meta">${escapeHtml(game.league)} · ${escapeHtml(game.time)}</div></div><span class="pill">${escapeHtml(game.status)}</span></div>
+      <div class="game-meta">Favorite: ${escapeHtml(favoriteName)} ${game.spread ? '('+escapeHtml(spreadText(game.spread))+')' : ''}</div>
+      <div class="pick-options">
+        <button class="pick ${current==='favorite_win'?'selected':''}" data-pick="${escapeHtml(game.id)}:favorite_win" ${locked?'disabled':''}>Favorite wins<span class="sub">${ui.scoring.win} point${ui.scoring.win===1?'':'s'}</span></button>
+        <button class="pick ${current==='favorite_cover'?'selected':''}" data-pick="${escapeHtml(game.id)}:favorite_cover" ${locked?'disabled':''}>Favorite covers<span class="sub">${ui.scoring.cover} points</span></button>
+        <button class="pick ${current==='underdog_win'?'selected':''}" data-pick="${escapeHtml(game.id)}:underdog_win" ${locked?'disabled':''}>${escapeHtml(dogName)} wins outright<span class="sub">${ui.scoring.dog} points</span></button>
+      </div>
+    </article>`;
+  }
+  function renderGames() {
+    const filtered = ui.games.filter(g => ui.filter === 'All' || g.league === ui.filter);
+    $('allGames').innerHTML = filtered.length ? filtered.map(g=>cardHtml(g)).join('') : '<div class="empty span12">No games found for this filter and week.</div>';
+    const featured = ui.games.slice(0,4);
+    $('featuredGames').innerHTML = featured.length ? featured.map(g=>cardHtml(g,true)).join('') : '<div class="empty span12">No games assigned to this week yet.</div>';
+    document.querySelectorAll('[data-pick]').forEach(btn => btn.addEventListener('click', () => choosePick(btn.dataset.pick)));
+    updateStats();
+  }
+  async function choosePick(raw) {
+    if (!ui.user || !ui.activeLeague || !ui.activeWeek) { toast('Sign in and select a league/week first.'); return; }
+    if (ui.activeWeek.picks_lock_at && new Date(ui.activeWeek.picks_lock_at).getTime() <= Date.now()) { toast('This week is locked.'); return; }
+    if (ui.submitted) { toast('These picks have been submitted. Reload the week or ask the manager about reopening it.'); return; }
+    const split = raw.lastIndexOf(':'); const gameId = raw.slice(0,split); const type = raw.slice(split+1);
+    const game = getGame(gameId); if (!game) { toast('Could not find that game.'); return; }
+    if (ui.picks[String(gameId)] === type) {
+      const {error} = await supabase.from('picks').delete()
+        .eq('league_id',ui.activeLeague.id).eq('week_id',ui.activeWeek.id)
+        .eq('game_id',gameId).eq('user_id',ui.user.id);
+      if (error) { toast('Could not remove pick: '+error.message); return; }
+      delete ui.picks[String(gameId)]; renderGames(); renderParlayOptions(); toast('Pick removed.'); return;
+    }
+    const payload = {
+      league_id: ui.activeLeague.id, week_id: ui.activeWeek.id, game_id: gameId, user_id: ui.user.id,
+      pick: type, spread_at_pick: game.spread, favorite_at_pick: game.favorite
+    };
+    const {data:existing,error:findError} = await supabase.from('picks').select('id')
+      .eq('league_id',ui.activeLeague.id).eq('week_id',ui.activeWeek.id).eq('game_id',gameId).eq('user_id',ui.user.id).maybeSingle();
+    if (findError) { toast('Could not check existing pick: '+findError.message); return; }
+    let result;
+    if (existing) result = await supabase.from('picks').update(payload).eq('id',existing.id).select('id').single();
+    else result = await supabase.from('picks').insert(payload).select('id').single();
+    if (result.error) { toast('Could not save pick: '+result.error.message); return; }
+    ui.picks[String(gameId)] = type; renderGames(); renderParlayOptions(); toast('Pick saved.');
+  }
+  function updateStats() {
+    const count = Object.keys(ui.picks).length;
+    $('statPicks').textContent = `${count} / ${ui.activeLeague?.required_picks ?? '—'}`;
+    $('statParlays').textContent = ui.parlays.length;
+    $('statPoints').textContent = Object.values(ui.picks).reduce((sum,type)=>sum+pointsFor(type),0);
+    $('pickCount').textContent = `${count} pick${count===1?'':'s'} selected`;
+    $('parlayCount').textContent = `${ui.parlays.length} saved`;
+    $('dashLeagueName').textContent = ui.activeLeague?.name || 'Select a league';
+    $('dashSub').textContent = ui.activeWeek ? `${ui.activeWeek.title || 'Week '+ui.activeWeek.week_number} · ${ui.activeLeague?.required_picks || 0} required picks` : 'Create or join a league to get started.';
+    $('weekPill').textContent = ui.activeWeek ? `Week ${ui.activeWeek.week_number}` : 'No week selected';
+    $('settingsInviteCode').textContent = ui.activeLeague?.invite_code || '—';
+  }
+  async function loadAuth() {
+    if (!needClient()) return;
+    const {data,error} = await supabase.auth.getSession();
+    if (error) status('authStatus',error.message,'error');
+    ui.user = data?.session?.user || null;
+    renderAuth();
+    if (ui.user) { await loadLeagues(); }
+  }
+  function renderAuth() {
+    const signed = Boolean(ui.user);
+    $('authPanel').classList.toggle('hidden',signed);
+    $('mainNav').classList.toggle('hidden',!signed);
+    $('appMain').classList.toggle('hidden',!signed);
+    $('signOutBtn').classList.toggle('hidden',!signed);
+    $('authLabel').textContent = signed ? (ui.user.email || 'Signed in') : 'Not signed in';
+    if (!signed) status('authStatus','Sign in to create or join leagues.');
+  }
+  async function signIn() {
+    if (!needClient()) return;
+    const email = $('authEmail').value.trim(), password = $('authPassword').value;
+    if (!email || !password) { status('authStatus','Enter your email and password.','error'); return; }
+    const {data,error} = await supabase.auth.signInWithPassword({email,password});
+    if (error) { status('authStatus',error.message,'error'); return; }
+    ui.user = data.user; renderAuth(); await loadLeagues(); toast('Signed in.');
+  }
+  async function signUp() {
+    if (!needClient()) return;
+    const email = $('authEmail').value.trim(), password = $('authPassword').value, name = $('authName').value.trim();
+    if (!email || !password) { status('authStatus','Enter an email and password.','error'); return; }
+    const {data,error} = await supabase.auth.signUp({email,password,options:{data:{display_name:name || email.split('@')[0]}}});
+    if (error) { status('authStatus',error.message,'error'); return; }
+    if (!data.session) { status('authStatus','Account created. Check your email to confirm, then sign in.','good'); return; }
+    ui.user = data.user; renderAuth(); await loadLeagues(); toast('Account created.');
+  }
+  async function loadLeagues() {
+    if (!ui.user) return;
+    status('leagueStatus','Loading leagues…');
+    const {data,error} = await supabase.from('league_members')
+      .select('role,joined_at,leagues(id,name,invite_code,required_picks,max_parlays)')
+      .order('joined_at',{ascending:false});
+    if (error) { status('leagueStatus','Could not load leagues: '+error.message,'error'); $('leagueList').innerHTML='<div class="empty span12">Unable to load leagues. Check table access and RLS policies.</div>'; return; }
+    ui.leagues = (data||[]).map(m=>({...m,league:m.leagues})).filter(m=>m.league);
+    renderLeagues();
+    status('leagueStatus',ui.leagues.length ? 'Choose a league below, or create/join another.' : 'No leagues yet. Create one or join with an invitation code.','good');
+    if (!ui.activeLeague && ui.leagues.length) await selectLeague(ui.leagues[0].league.id);
+    else if (ui.activeLeague && ui.leagues.some(m=>m.league.id===ui.activeLeague.id)) await selectLeague(ui.activeLeague.id,false);
+  }
+  function renderLeagues() {
+    $('leagueList').innerHTML = ui.leagues.length ? ui.leagues.map(m=>`<div class="league-card ${ui.activeLeague?.id===m.league.id?'selected':''} span4">
+      <div class="between"><strong>${escapeHtml(m.league.name)}</strong><span class="pill">${escapeHtml(m.role||'player')}</span></div>
+      <div class="small">${Number(m.league.required_picks)||4} required picks · Up to ${Number(m.league.max_parlays)||0} parlays</div>
+      <div class="small">Code: <strong>${escapeHtml(m.league.invite_code||'—')}</strong></div>
+      <button class="btn ${ui.activeLeague?.id===m.league.id?'primary':'small'}" data-select-league="${escapeHtml(m.league.id)}">${ui.activeLeague?.id===m.league.id?'Selected':'Select league'}</button>
+    </div>`).join('') : '<div class="empty span12">No leagues yet.</div>';
+    document.querySelectorAll('[data-select-league]').forEach(b=>b.addEventListener('click',()=>selectLeague(b.dataset.selectLeague)));
+  }
+  async function createLeague() {
+    if (!ui.user) { toast('Sign in first.'); return; }
+    const name = $('newLeagueName').value.trim();
+    if (!name) { toast('Enter a league name.'); return; }
+    const required = Math.max(1,Math.min(32,Number($('newRequired').value)||4));
+    const maxParlays = Math.max(0,Math.min(5,Number($('newMaxParlays').value)||0));
+    const {data,error} = await supabase.rpc('create_league_with_manager',{p_name:name,p_required_picks:required,p_max_parlays:maxParlays});
+    if (error) { status('leagueStatus','Could not create league: '+error.message,'error'); return; }
+    $('newLeagueName').value = ''; status('leagueStatus','League created. Reloading your leagues…','good');
+    await loadLeagues(); toast('League created.');
+  }
+  async function joinLeague() {
+    if (!ui.user) { toast('Sign in first.'); return; }
+    const code = $('joinCode').value.trim().toUpperCase();
+    if (!code) { toast('Enter an invitation code.'); return; }
+    const {data,error} = await supabase.rpc('join_league_by_code',{p_invite_code:code});
+    if (error) { status('leagueStatus','Could not join league: '+error.message,'error'); return; }
+    $('joinCode').value = ''; await loadLeagues(); toast('Joined league.');
+  }
+  async function selectLeague(id,showToast=true) {
+    const membership = ui.leagues.find(m=>String(m.league.id)===String(id));
+    if (!membership) { toast('That league is not available in your memberships.'); return; }
+    ui.activeLeague = membership.league;
+    ui.submitted = false; ui.picks = {}; ui.games = []; ui.weeks = []; ui.activeWeek = null; ui.parlays = [];
+    ui.scoring = {
+      win:Number(ui.activeLeague.points_win ?? 1),
+      cover:Number(ui.activeLeague.points_cover ?? 2),
+      dog:Number(ui.activeLeague.points_dog ?? 3),
+      bonus:Number(ui.activeLeague.parlay_bonus ?? 4)
+    };
+    renderLeagues(); updateStats(); fillSettings();
+    await loadWeeks();
+    if (showToast) toast('League selected.');
+  }
+  async function loadWeeks() {
+    if (!ui.activeLeague) return;
+    status('pickStatus','Loading weeks and games…');
+    const {data,error} = await supabase.from('weeks').select('id,league_id,season_year,week_number,title,picks_lock_at')
+      .eq('league_id',ui.activeLeague.id).order('week_number',{ascending:true});
+    if (error) { status('pickStatus','Could not load weeks: '+error.message,'error'); status('leagueStatus',error.message,'error'); return; }
+    ui.weeks = data || [];
+    $('weekSelect').innerHTML = ui.weeks.length ? ui.weeks.map(w=>`<option value="${escapeHtml(w.id)}">${escapeHtml(w.title || ('Week '+w.week_number))}${w.season_year?' · '+escapeHtml(w.season_year):''}</option>`).join('') : '<option value="">No weeks available</option>';
+    if (!ui.weeks.length) {
+      ui.activeWeek = null; ui.games=[]; ui.picks={}; renderGames();
+      status('pickStatus','This league has no weeks yet. Assign games to a week in the existing database.','error'); return;
+    }
+    const now = Date.now();
+    const preferred = ui.weeks.find(w=>!w.picks_lock_at || new Date(w.picks_lock_at).getTime()>now) || ui.weeks[ui.weeks.length-1];
+    ui.activeWeek = preferred;
+    $('weekSelect').value = preferred.id;
+    await loadWeekData();
+  }
+  async function changeWeek() {
+    const id = $('weekSelect').value;
+    ui.activeWeek = ui.weeks.find(w=>String(w.id)===String(id)) || null;
+    ui.picks={}; ui.games=[]; ui.parlays=[]; ui.submitted=false;
+    await loadWeekData();
+  }
+  async function loadWeekData() {
+    if (!ui.activeLeague || !ui.activeWeek) return;
+    const {data:links,error:linkError} = await supabase.from('week_games').select('game_id').eq('week_id',ui.activeWeek.id);
+    if (linkError) { status('pickStatus','Could not load assigned games: '+linkError.message,'error'); return; }
+    const ids = (links||[]).map(x=>x.game_id);
+    if (!ids.length) { ui.games=[]; ui.picks={}; renderGames(); renderParlayOptions(); status('pickStatus','No games are assigned to this week yet.','error'); return; }
+    const {data:rows,error:gameError} = await supabase.from('games')
+      .select('id,provider,provider_game_id,sport,season_year,week_number,away_team,home_team,favorite_team,spread,kickoff_at,status,away_score,home_score')
+      .in('id',ids);
+    if (gameError) { status('pickStatus','Could not load games: '+gameError.message,'error'); return; }
+    ui.games = (rows||[]).map(mapGame).sort((a,b)=>(a.kickoff_at||'').localeCompare(b.kickoff_at||''));
+    await loadPicks();
+    await loadParlays();
+    renderGames(); renderParlayOptions(); updateStats();
+    const lock = ui.activeWeek.picks_lock_at ? new Date(ui.activeWeek.picks_lock_at).toLocaleString() : 'No deadline set';
+    $('deadlineInfo').textContent = `Week ${ui.activeWeek.week_number}: ${lock}`;
+    status('pickStatus',`Loaded ${ui.games.length} games for ${ui.activeWeek.title || 'Week '+ui.activeWeek.week_number}. ${Object.keys(ui.picks).length} saved picks found.`, 'good');
+  }
+  async function loadPicks() {
+    if (!ui.activeLeague || !ui.activeWeek || !ui.user) return;
+    const {data,error} = await supabase.from('picks').select('id,game_id,pick,submitted_at,spread_at_pick,favorite_at_pick')
+      .eq('league_id',ui.activeLeague.id).eq('week_id',ui.activeWeek.id).eq('user_id',ui.user.id);
+    if (error) { status('pickStatus','Could not load saved picks: '+error.message,'error'); return; }
+    ui.picks = {};
+    (data||[]).forEach(row=>{ui.picks[String(row.game_id)] = row.pick;});
+    // Existing schema has submitted_at on each pick; a shared week submission record is not assumed.
+    ui.submitted = false;
+    renderGames(); renderParlayOptions();
+  }
+  async function submitPicks() {
+    if (!ui.activeLeague || !ui.activeWeek) { toast('Select a league and week first.'); return; }
+    const count = Object.keys(ui.picks).length;
+    const required = Number(ui.activeLeague.required_picks)||4;
+    if (count < required) { toast(`Choose at least ${required} picks before submitting.`); return; }
+    if (ui.activeWeek.picks_lock_at && new Date(ui.activeWeek.picks_lock_at).getTime() <= Date.now()) { toast('This week is already locked.'); return; }
+    // Compatible with current picks table: stamp submitted_at on all saved picks.
+    const {error} = await supabase.from('picks').update({submitted_at:new Date().toISOString()})
+      .eq('league_id',ui.activeLeague.id).eq('week_id',ui.activeWeek.id).eq('user_id',ui.user.id);
+    if (error) { toast('Could not submit picks: '+error.message); return; }
+    ui.submitted = true; renderGames(); status('pickStatus',`${count} picks submitted. Confirmed by the database.`, 'good'); toast('Weekly picks submitted.');
+  }
+  function renderParlayOptions() {
+    const picks = Object.entries(ui.picks);
+    $('parlayOptions').innerHTML = picks.length ? picks.map(([gameId,type])=>{
+      const g=getGame(gameId); return `<label class="league-card"><span><input type="checkbox" class="parlay-leg" value="${escapeHtml(gameId)}" style="width:auto;margin-right:8px">${escapeHtml(predictionText(g,type))}</span><span class="small">${escapeHtml(g?.league||'')} · ${escapeHtml(g?.time||'')}</span></label>`;
+    }).join('') : '<div class="empty">Make individual picks first.</div>';
+  }
+  async function loadParlays() {
+    if (!ui.activeLeague || !ui.activeWeek || !ui.user) return;
+    const {data:parlays,error} = await supabase.from('parlays').select('id,name,created_at')
+      .eq('league_id',ui.activeLeague.id).eq('week_id',ui.activeWeek.id).eq('user_id',ui.user.id).order('created_at',{ascending:true});
+    if (error) { status('parlayStatus','Could not load parlays: '+error.message,'error'); $('parlayList').innerHTML='<div class="empty">Parlays could not be loaded.</div>'; return; }
+    const ids=(parlays||[]).map(p=>p.id);
+    let legs=[];
+    if (ids.length) {
+      const {data:legRows,error:legError}=await supabase.from('parlay_legs').select('parlay_id,pick_id,leg_order,picks(id,game_id,pick)').in('parlay_id',ids).order('leg_order',{ascending:true});
+      if (legError) { status('parlayStatus','Could not load parlay legs: '+legError.message,'error'); }
+      else legs=legRows||[];
+    }
+    ui.parlays=(parlays||[]).map(p=>({...p,legs:legs.filter(l=>String(l.parlay_id)===String(p.id)).map(l=>({pickId:l.pick_id,gameId:l.picks?.game_id,type:l.picks?.pick,order:l.leg_order}))}));
+    renderParlayList();
+  }
+  function renderParlayList() {
+    $('parlayCount').textContent=`${ui.parlays.length} saved`;
+    $('parlayList').innerHTML=ui.parlays.length ? ui.parlays.map((p,i)=>`<article class="game"><div class="between"><strong>${escapeHtml(p.name||'Parlay '+(i+1))}</strong><button class="btn danger small" data-delete-parlay="${escapeHtml(p.id)}">Delete</button></div><div class="small">${p.legs.length} legs · ${ui.scoring.bonus} bonus points if all legs are correct</div>${p.legs.map(l=>`<div class="status">${escapeHtml(predictionText(getGame(l.gameId),l.type))}</div>`).join('')}</article>`).join(''):'<div class="empty">No parlays saved for this week.</div>';
+    document.querySelectorAll('[data-delete-parlay]').forEach(b=>b.addEventListener('click',()=>deleteParlay(b.dataset.deleteParlay)));
+  }
+  async function createParlay() {
+    if (!ui.activeLeague || !ui.activeWeek || !ui.user) { toast('Select a league and week first.'); return; }
+    if (ui.parlays.length >= Number(ui.activeLeague.max_parlays ?? 2)) { toast(`This league allows at most ${ui.activeLeague.max_parlays} parlays.`); return; }
+    const ids=[...document.querySelectorAll('.parlay-leg:checked')].map(x=>x.value);
+    if (ids.length<2) { toast('Select at least two picks for a parlay.'); return; }
+    const pickRows = await supabase.from('picks').select('id,game_id,pick')
+      .eq('league_id',ui.activeLeague.id).eq('week_id',ui.activeWeek.id).eq('user_id',ui.user.id).in('game_id',ids);
+    if (pickRows.error) { status('parlayStatus','Could not find saved pick rows: '+pickRows.error.message,'error'); return; }
+    const byGame=new Map((pickRows.data||[]).map(p=>[String(p.game_id),p]));
+    if (ids.some(id=>!byGame.has(String(id)))) { toast('One or more selected legs are not saved picks. Reload picks and try again.'); return; }
+    const {data:parlay,error}=await supabase.from('parlays').insert({
+      league_id:ui.activeLeague.id,week_id:ui.activeWeek.id,user_id:ui.user.id,name:$('parlayName').value.trim()||null
+    }).select('id').single();
+    if (error) { status('parlayStatus','Could not save parlay: '+error.message,'error'); return; }
+    const legPayload=ids.map((id,index)=>({parlay_id:parlay.id,pick_id:byGame.get(String(id)).id,leg_order:index+1}));
+    const {error:legError}=await supabase.from('parlay_legs').insert(legPayload);
+    if (legError) {
+      await supabase.from('parlays').delete().eq('id',parlay.id);
+      status('parlayStatus','Could not save parlay legs: '+legError.message,'error'); return;
+    }
+    $('parlayName').value=''; await loadParlays(); status('parlayStatus','Parlay saved to Supabase.','good'); toast('Parlay saved.');
+  }
+  async function deleteParlay(id) {
+    const {error}=await supabase.from('parlays').delete().eq('id',id).eq('user_id',ui.user.id);
+    if (error) { toast('Could not delete parlay: '+error.message); return; }
+    await loadParlays(); toast('Parlay deleted.');
+  }
+  function fillSettings() {
+    const l=ui.activeLeague; if (!l) return;
+    $('settingsName').value=l.name||'';
+    $('settingsRequired').value=l.required_picks??4;
+    $('settingsMaxParlays').value=l.max_parlays??2;
+    $('pointsWin').value=ui.scoring.win; $('pointsCover').value=ui.scoring.cover;
+    $('pointsDog').value=ui.scoring.dog; $('parlayBonus').value=ui.scoring.bonus;
+    $('settingsInviteCode').textContent=l.invite_code||'—';
+  }
+  async function saveSettings() {
+    if (!ui.activeLeague) { toast('Select a league first.'); return; }
+    const payload={
+      name:$('settingsName').value.trim()||ui.activeLeague.name,
+      required_picks:Math.max(1,Math.min(32,Number($('settingsRequired').value)||4)),
+      max_parlays:Math.max(0,Math.min(5,Number($('settingsMaxParlays').value)||0))
+    };
+    // The existing schema confirmed name/required_picks/max_parlays. Scoring columns may not exist yet.
+    const {data,error}=await supabase.from('leagues').update(payload).eq('id',ui.activeLeague.id).select('id,name,invite_code,required_picks,max_parlays').single();
+    if (error) { status('settingsStatus','Could not save settings: '+error.message+' Check that the signed-in user is a manager and RLS allows this update.','error'); return; }
+    ui.activeLeague={...ui.activeLeague,...data};
+    ui.leagues=ui.leagues.map(m=>m.league.id===data.id?{...m,league:{...m.league,...data}}:m);
+    ui.scoring={win:Number($('pointsWin').value)||0,cover:Number($('pointsCover').value)||0,dog:Number($('pointsDog').value)||0,bonus:Number($('parlayBonus').value)||0};
+    status('settingsStatus','League name, required picks, and parlay limit saved. Scoring values are currently local until the optional scoring columns are added.','good');
+    renderLeagues(); updateStats(); renderGames(); toast('League settings saved.');
+  }
+  async function loadStandings() {
+    if (!ui.activeLeague) { status('standingsStatus','Select a league first.'); return; }
+    status('standingsStatus','Calculating standings…');
+    const {data:members,error:memberError}=await supabase.from('league_members')
+      .select('user_id,role,profiles(display_name,full_name,username)').eq('league_id',ui.activeLeague.id);
+    if (memberError) { status('standingsStatus','Could not load members: '+memberError.message,'error'); return; }
+    const {data:picks,error:picksError}=await supabase.from('picks').select('user_id,week_id,game_id,pick,submitted_at,games(away_score,home_score,away_team,home_team,favorite_team,spread,sport)')
+      .eq('league_id',ui.activeLeague.id);
+    if (picksError) { status('standingsStatus','Could not load picks/results: '+picksError.message,'error'); return; }
+    const totals=new Map();
+    (members||[]).forEach(m=>totals.set(m.user_id,{userId:m.user_id,name:m.profiles?.display_name||m.profiles?.full_name||m.profiles?.username||('Player '+String(m.user_id).slice(0,6)),season:0,week:0,correct:0}));
+    (picks||[]).forEach(p=>{
+      const t=totals.get(p.user_id); if(!t)return;
+      const g=p.games; if(!g || g.away_score==null || g.home_score==null)return;
+      const away=Number(g.away_score),home=Number(g.home_score),spread=Number(g.spread)||0;
+      const fav=teamLabel(g.favorite_team,g.sport);
+      const favAway=(g.favorite_team===g.away_team)||(g.sport==='NFL'&&fav===g.away_team);
+      const favHome=(g.favorite_team===g.home_team)||(g.sport==='NFL'&&fav===g.home_team);
+      const favScore=favAway?away:home, dogScore=favAway?home:away;
+      let correct=false,pts=0;
+      if(p.pick==='favorite_win'){correct=favScore>dogScore;pts=correct?ui.scoring.win:0;}
+      else if(p.pick==='favorite_cover'){correct=(favAway?(away+spread>home):(home+spread>away));pts=correct?ui.scoring.cover:0;}
+      else if(p.pick==='underdog_win'){correct=dogScore>favScore;pts=correct?ui.scoring.dog:0;}
+      if(correct){t.season+=pts;t.correct++;}
+      if(p.week_id===selectedWeekId())t.week+=correct?pts:0;
+    });
+    const sorted=[...totals.values()].sort((a,b)=>b.season-a.season||b.correct-a.correct||a.name.localeCompare(b.name));
+    $('standingsBody').innerHTML=sorted.length?sorted.map((r,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(r.name)}${r.userId===ui.user.id?' <span class="pill">You</span>':''}</td><td>${r.week}</td><td><strong>${r.season}</strong></td><td>${r.correct}</td></tr>`).join(''):'<tr><td colspan="5">No league members found.</td></tr>';
+    status('standingsStatus','Standings calculated from available completed-game scores. Parlay bonuses are not included in this first version.','good');
+  }
+  async function copyInvite() {
+    const code=ui.activeLeague?.invite_code; if(!code){toast('No invitation code available.');return;}
+    try { await navigator.clipboard.writeText(code); toast('Invitation code copied.'); } catch { toast('Invitation code: '+code); }
+  }
+  function setupEvents() {
+    $('signInBtn').addEventListener('click',signIn);
+    $('signUpBtn').addEventListener('click',signUp);
+    $('signOutBtn').addEventListener('click',async()=>{if(supabase)await supabase.auth.signOut();ui.user=null;ui.activeLeague=null;ui.leagues=[];ui.picks={};ui.games=[];renderAuth();toast('Signed out.');});
+    $('createLeagueBtn').addEventListener('click',createLeague);
+    $('joinLeagueBtn').addEventListener('click',joinLeague);
+    $('refreshBtn').addEventListener('click',loadLeagues);
+    $('weekSelect').addEventListener('change',changeWeek);
+    $('submitPicksBtn').addEventListener('click',submitPicks);
+    $('reloadPicksBtn').addEventListener('click',loadWeekData);
+    $('createParlayBtn').addEventListener('click',createParlay);
+    $('saveSettingsBtn').addEventListener('click',saveSettings);
+    $('refreshStandingsBtn').addEventListener('click',loadStandings);
+    $('copyInviteBtn').addEventListener('click',copyInvite);
+    document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.tab)));
+    document.querySelectorAll('[data-goto]').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.goto)));
+    document.querySelectorAll('[data-filter]').forEach(b=>b.addEventListener('click',()=>{
+      ui.filter=b.dataset.filter;
+      document.querySelectorAll('[data-filter]').forEach(x=>x.classList.toggle('active',x===b));
+      renderGames();
+    }));
+  }
 
-}
-
-async function loadRealGames(){
- if(!activeLeagueId)return;
-
- const {data:weeks,error:weekError}=await supabaseClient
-  .from('weeks')
-  .select('id,week_number,title')
-  .eq('league_id',activeLeagueId)
-  .order('week_number',{ascending:true});
-
- if(weekError){
-  $("realLeagueStatus").textContent='Could not load weeks: '+weekError.message;
-  return;
- }
- if(!weeks||!weeks.length){
-  $("realLeagueStatus").textContent='No games have been assigned to this league yet.';
-  return;
- }
-
- const week=weeks[0];
- const {data:links,error:linkError}=await supabaseClient
-  .from('week_games')
-  .select('game_id')
-  .eq('week_id',week.id);
-
- if(linkError){
-  $("realLeagueStatus").textContent='Could not load game links: '+linkError.message;
-  return;
- }
- if(!links||!links.length){
-  $("realLeagueStatus").textContent='No games are assigned to this week yet.';
-  return;
- }
-
- const ids=links.map(x=>x.game_id);
- const {data:rows,error:gameError}=await supabaseClient
-  .from('games')
-  .select('id,sport,away_team,home_team,favorite_team,spread,kickoff_at,status')
-  .in('id',ids);
-
- if(gameError){
-  $("realLeagueStatus").textContent='Could not load games: '+gameError.message;
-  return;
- }
- if(!rows||!rows.length)return;
-
- games=rows.map(g=>({
-  id:g.id,
-  league:g.sport==='NCAA'?'NCAA':'NFL',
-  away:g.away_team,
-  home:g.home_team,
-  favorite:({ARI:'Arizona Cardinals',ATL:'Atlanta Falcons',BAL:'Baltimore Ravens',BUF:'Buffalo Bills',CAR:'Carolina Panthers',CHI:'Chicago Bears',CIN:'Cincinnati Bengals',CLE:'Cleveland Browns',DAL:'Dallas Cowboys',DEN:'Denver Broncos',DET:'Detroit Lions',GB:'Green Bay Packers',HOU:'Houston Texans',IND:'Indianapolis Colts',JAX:'Jacksonville Jaguars',KC:'Kansas City Chiefs',LV:'Las Vegas Raiders',LAC:'Los Angeles Chargers',LA:'Los Angeles Rams',MIA:'Miami Dolphins',MIN:'Minnesota Vikings',NE:'New England Patriots',NO:'New Orleans Saints',NYG:'New York Giants',NYJ:'New York Jets',PHI:'Philadelphia Eagles',PIT:'Pittsburgh Steelers',SF:'San Francisco 49ers',SEA:'Seattle Seahawks',TB:'Tampa Bay Buccaneers',TEN:'Tennessee Titans',WAS:'Washington Commanders'}[g.favorite_team]||g.favorite_team),
-  spread:Number(g.spread)||0,
-  time:new Date(g.kickoff_at).toLocaleString('en-US',{
-   timeZone:'America/Chicago',
-   weekday:'short',
-   hour:'numeric',
-   minute:'2-digit'
-  })+' CT',
-  status:g.status||'Upcoming'
- }));
-
- renderGames('featuredGames');
- renderGames();
- renderParlays();
- updateStats();
- $("realLeagueStatus").textContent=`Loaded ${games.length} real games for Week ${week.week_number}.`;
-}
-
- function escapeHtml(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-$("createRealLeague").onclick=async()=>{
- const {data:sd}=await supabaseClient.auth.getSession();if(!sd.session){toast('Please sign in first.');return;}
- const name=$("realLeagueName").value.trim();if(!name){toast('Enter a league name.');return;}
- const {data,error}=await supabaseClient.rpc('create_league_with_manager',{p_name:name,p_required_picks:Math.max(1,Math.min(32,Number($("realRequiredPicks").value)||4)),p_max_parlays:Math.max(0,Math.min(5,Number($("realMaxParlays").value)||0))});
- if(error){$("realLeagueStatus").textContent='Could not create league: '+error.message+' If you have not run league_functions.sql in Supabase, do that first.';return;}
- const league=data?.[0];$("realLeagueStatus").textContent=league?`League created: ${league.league_name}. Invitation code: ${league.invite_code}`:'League created.';$("realLeagueName").value='';await loadRealLeagues();toast('Real league created.');
-};
-$("joinLeague").onclick=async()=>{
- const {data:sd}=await supabaseClient.auth.getSession();if(!sd.session){toast('Please sign in first.');return;}
- const code=$("joinCode").value.trim().toUpperCase();if(!code){toast('Enter an invitation code.');return;}
- const {data,error}=await supabaseClient.rpc('join_league_by_code',{p_invite_code:code});
- if(error){$("realLeagueStatus").textContent='Could not join league: '+error.message+' If you have not run league_functions.sql in Supabase, do that first.';return;}
- const league=data?.[0];$("realLeagueStatus").textContent=league?`Joined ${league.league_name} successfully.`:'Joined league successfully.';$("joinCode").value='';await loadRealLeagues();toast('Joined league.');
-};
-renderGames("featuredGames");renderGames();renderParlays();renderStandings();updateStats();refreshAuth();loadRealLeagues();
-if("serviceWorker" in navigator && location.protocol.startsWith("http"))navigator.serviceWorker.register("sw.js").catch(()=>{});
+  async function init() {
+    setupEvents();
+    if (!window.supabase || SUPABASE_ANON_KEY.includes('PASTE_YOUR')) {
+      status('authStatus','Before using the app, replace PASTE_YOUR_EXISTING_SUPABASE_PUBLIC_ANON_KEY_HERE with the public anon/publishable key from your existing Supabase project. Do not use a service_role key.','error');
+      $('authLabel').textContent='Setup needed'; return;
+    }
+    supabase=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+    supabase.auth.onAuthStateChange((_event,session)=>{
+      // Avoid doing complex async work inside the auth callback.
+      setTimeout(async()=>{ui.user=session?.user||null;renderAuth();if(ui.user)await loadLeagues();},0);
+    });
+    await loadAuth();
+  }
+  init();
+})();
 </script>
 </body>
 </html>
