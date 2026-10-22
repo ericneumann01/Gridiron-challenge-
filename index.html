@@ -201,11 +201,26 @@
     return `<article class="game ${featured?'span6':'span6'}">
       <div class="game-top"><div><div class="teams">${escapeHtml(game.away)} @ ${escapeHtml(game.home)}</div><div class="game-meta">${escapeHtml(game.league)} · ${escapeHtml(game.time)}</div></div><span class="pill">${escapeHtml(game.status)}</span></div>
       <div class="game-meta">Favorite: ${escapeHtml(favoriteName)} ${game.spread ? '('+escapeHtml(spreadText(game.spread))+')' : ''}</div>
-      <div class="pick-options">
-        <button class="pick ${current==='favorite_win'?'selected':''}" data-pick="${escapeHtml(game.id)}:favorite_win" ${locked?'disabled':''}>Favorite wins<span class="sub">${ui.scoring.win} point${ui.scoring.win===1?'':'s'}</span></button>
-        <button class="pick ${current==='favorite_cover'?'selected':''}" data-pick="${escapeHtml(game.id)}:favorite_cover" ${locked?'disabled':''}>Favorite covers<span class="sub">${ui.scoring.cover} points</span></button>
-        <button class="pick ${current==='underdog_win'?'selected':''}" data-pick="${escapeHtml(game.id)}:underdog_win" ${locked?'disabled':''}>${escapeHtml(dogName)} wins outright<span class="sub">${ui.scoring.dog} points</span></button>
-      </div>
+     
+<div class="pick-options">
+  <button class="pick ${current==='favorite_win'?'selected':''}" data-pick="${escapeHtml(game.id)}:favorite_win" ${locked?'disabled':''}>
+    Favorite wins
+    <span class="sub">${ui.scoring.win} point${ui.scoring.win===1?'':'s'}</span>
+  </button>
+  <button class="pick ${current==='favorite_cover'?'selected':''}" data-pick="${escapeHtml(game.id)}:favorite_cover" ${locked?'disabled':''}>
+    Favorite covers
+    <span class="sub">${ui.scoring.cover} points</span>
+  </button>
+  <button class="pick ${current==='underdog_win'?'selected':''}" data-pick="${escapeHtml(game.id)}:underdog_win" ${locked?'disabled':''}>
+    ${escapeHtml(dogName)} wins outright
+    <span class="sub">${ui.scoring.dog} points</span>
+  </button>
+  <button class="pick ${current==='underdog_cover'?'selected':''}" data-pick="${escapeHtml(game.id)}:underdog_cover" ${locked?'disabled':''}>
+    Underdog covers
+    <span class="sub">2 points</span>
+  </button>
+</div>
+
     </article>`;
   }
   function renderGames() {
