@@ -508,7 +508,7 @@
     const {data:members,error:memberError}=await supabase.from('league_members')
       .select('user_id,role').eq('league_id',ui.activeLeague.id);
     if (memberError) { status('standingsStatus','Could not load members: '+memberError.message,'error'); return; }
-    const {data:picks,error:picksError}=await supabase.from('picks').select('user_id,week_id,game_id,pick,submitted_at,games(away_score,home_score,away_team,home_team,favorite_team,spread,sport)')
+    const {data:picks,error:picksError}=await supabase.from('picks').select('user_id,week_id,game_id,pick,submitted_at,spread_at_pick,favorite_at_pick,games(away_score,home_score,away_team,home_team,favorite_team,spread,sport)')
       .eq('league_id',ui.activeLeague.id);
     if (picksError) { status('standingsStatus','Could not load picks/results: '+picksError.message,'error'); return; }
     const totals=new Map();
@@ -516,15 +516,31 @@
     (picks||[]).forEach(p=>{
       const t=totals.get(p.user_id); if(!t)return;
       const g=p.games; if(!g || g.away_score==null || g.home_score==null)return;
-      const away=Number(g.away_score),home=Number(g.home_score),spread=Number(g.spread)||0;
-      const fav=teamLabel(g.favorite_team,g.sport);
-      const favAway=(g.favorite_team===g.away_team)||(g.sport==='NFL'&&fav===g.away_team);
-      const favHome=(g.favorite_team===g.home_team)||(g.sport==='NFL'&&fav===g.home_team);
-      const favScore=favAway?away:home, dogScore=favAway?home:away;
-      let correct=false,pts=0;
-      if(p.pick==='favorite_win'){correct=favScore>dogScore;pts=correct?ui.scoring.win:0;}
-      else if(p.pick==='favorite_cover'){correct=(favAway?(away+spread>home):(home+spread>away));pts=correct?ui.scoring.cover:0;}
-      else if(p.pick==='underdog_win'){correct=dogScore>favScore;pts=correct?ui.scoring.dog:0;}
+const away=Number(g.away_score),home=Number(g.home_score);
+const spread=Number(p.spread_at_pick ?? g.spread)||0;
+const favorite=p.favorite_at_pick || g.favorite_team;
+const fav=teamLabel(favorite,g.sport);
+const favAway=(favorite===g.away_team)||(g.sport==='NFL'&&fav===g.away_team);
+const favHome=(favorite===g.home_team)||(g.sport==='NFL'&&fav===g.home_team);
+if(!favAway && !favHome) return;
+const favScore=favAway?away:home, dogScore=favAway?home:away;
+let correct=false,pts=0;
+if(p.pick==='favorite_win'){
+  correct=favScore>dogScore;
+  pts=correct?ui.scoring.win:0;
+}
+else if(p.pick==='favorite_cover'){
+  correct=(favScore-dogScore)>spread;
+  pts=correct?ui.scoring.cover:0;
+}
+else if(p.pick==='underdog_win'){
+  correct=dogScore>favScore;
+  pts=correct?ui.scoring.dog:0;
+}
+else if(p.pick==='underdog_cover'){
+  correct=(favScore-dogScore)<spread;
+  pts=correct?2:0;
+}
       if(correct){t.season+=pts;t.correct++;}
       if(p.week_id===selectedWeekId())t.week+=correct?pts:0;
     });
