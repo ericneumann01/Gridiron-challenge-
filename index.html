@@ -146,14 +146,15 @@
   function predictionText(game, type) {
     if (!game) return 'Unknown game';
     if (type === 'favorite_win') return `${game.favorite || 'Favorite'} to win`;
-    if (type === 'favorite_cover') return `${game.favorite || 'Favorite'} to cover ${spreadText(game.spread)}`;
+   if (type === 'favorite_cover') return `${game.favorite || 'Favorite'} to cover ${spreadText(game.spread, true)}`; 
     return `${game.underdog || 'Underdog'} to win outright`;
   }
-  function spreadText(spread) {
-    const n = Number(spread);
-    if (!Number.isFinite(n)) return '';
-    return n > 0 ? `+${n}` : String(n);
-  }
+  function spreadText(spread, isFavorite = true) {
+  const n = Number(spread);
+  if (!Number.isFinite(n)) return '';
+  const value = Math.abs(n);
+  return isFavorite ? `-${value}` : `+${value}`;
+}
   function pointsFor(type) {
     if (type === 'favorite_win') return ui.scoring.win;
     if (type === 'favorite_cover') return ui.scoring.cover;
@@ -200,7 +201,7 @@
     const dogName = game.underdog || 'Underdog';
     return `<article class="game ${featured?'span6':'span6'}">
       <div class="game-top"><div><div class="teams">${escapeHtml(game.away)} @ ${escapeHtml(game.home)}</div><div class="game-meta">${escapeHtml(game.league)} · ${escapeHtml(game.time)}</div></div><span class="pill">${escapeHtml(game.status)}</span></div>
-      <div class="game-meta">Favorite: ${escapeHtml(favoriteName)} ${game.spread ? '('+escapeHtml(spreadText(game.spread))+')' : ''}</div>
+    <div class="game-meta">Favorite: ${escapeHtml(favoriteName)} ${game.spread ? '('+escapeHtml(spreadText(game.spread, true))+')' : ''}</div>  
      
 <div class="pick-options">
   <button class="pick ${current==='favorite_win'?'selected':''}" data-pick="${escapeHtml(game.id)}:favorite_win" ${locked?'disabled':''}>
