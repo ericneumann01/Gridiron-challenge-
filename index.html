@@ -221,6 +221,8 @@
     <span class="sub">2 points</span>
   </button>
 </div>
+</article>`;
+  }
   function renderGames() {
     const filtered = ui.games.filter(g => ui.filter === 'All' || g.league === ui.filter);
     $('allGames').innerHTML = filtered.length ? filtered.map(g=>cardHtml(g)).join('') : '<div class="empty span12">No games found for this filter and week.</div>';
