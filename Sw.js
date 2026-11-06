@@ -1,4 +1,4 @@
-const CACHE_NAME = "gridiron-challenge-v1";
+const CACHE_NAME = "gridiron-challenge-v2";
 const APP_FILES = ["./", "./index.html", "./manifest.json"];
 
 self.addEventListener("install", (event) => {
