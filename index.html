@@ -215,22 +215,90 @@
   }
   function shortTeamName(name) {
     const mascots = [
-      'Tar Heels', 'Blue Devils', 'Fighting Irish', 'Nittany Lions',
-      'Crimson Tide', 'Buckeyes', 'Wolverines', 'Cornhuskers',
-      'Bulldogs', 'Tigers', 'Wildcats', 'Eagles', 'Hurricanes',
-      'Seminoles', 'Longhorns', 'Sooners', 'Cowboys', 'Broncos',
-      'Hawkeyes', 'Cyclones', 'Spartans', 'Hoosiers', 'Gators',
-      'Volunteers', 'Rebels', 'Razorbacks', 'Gamecocks', 'Aggies',
-      'Mustangs', 'Cardinals', 'Golden Bears', 'Bears', 'Lions',
-      'Panthers', 'Falcons', 'Knights', 'Pirates', 'Raiders',
-      'Warriors', 'Ducks', 'Beavers', 'Buffaloes', 'Utes',
-      'Cougars', 'Mountaineers', 'Red Raiders', 'Yellow Jackets',
-      'Orange', 'Boilermakers', 'Terrapins', 'Huskies', 'Demon Deacons'
+      'Golden Gophers',
+      'Coastal Carolina Chanticleers',
+      'Thundering Herd',
+      'Ragin’ Cajuns',
+      "Ragin' Cajuns",
+      'Scarlet Knights',
+      'Demon Deacons',
+      'Fighting Irish',
+      'Nittany Lions',
+      'Red Raiders',
+      'Blue Raiders',
+      'Golden Bears',
+      'Mountaineers',
+      'Yellow Jackets',
+      'Crimson Tide',
+      'Blue Hens',
+      'Hilltoppers',
+      'Midshipmen',
+      'Hawkeyes',
+      'Cornhuskers',
+      'Boilermakers',
+      'Seminoles',
+      'Volunteers',
+      'Gamecocks',
+      'Razorbacks',
+      'Thundering Herd',
+      'Warhawks',
+      'Monarchs',
+      'Bruins',
+      'Bulldogs',
+      'Tigers',
+      'Wildcats',
+      'Eagles',
+      'Hurricanes',
+      'Longhorns',
+      'Sooners',
+      'Cowboys',
+      'Broncos',
+      'Cyclones',
+      'Spartans',
+      'Hoosiers',
+      'Gators',
+      'Rebels',
+      'Aggies',
+      'Mustangs',
+      'Cardinals',
+      'Bears',
+      'Lions',
+      'Panthers',
+      'Falcons',
+      'Knights',
+      'Pirates',
+      'Raiders',
+      'Warriors',
+      'Ducks',
+      'Beavers',
+      'Buffaloes',
+      'Utes',
+      'Cougars',
+      'Huskies',
+      'Owls',
+      'Blazers',
+      'Jaguars',
+      'Rams',
+      'Badgers',
+      'Wolverines',
+      'Buckeyes',
+      'Tar Heels',
+      'Blue Devils',
+      'Orange',
+      'Black Knights',
+      'Golden Flashes',
+      'Red Wolves',
+      'Green Wave',
+      'Herd'
     ];
-    const value = String(name || '');
-    const mascot = mascots.find(m => value.endsWith(' ' + m));
-    return mascot ? value.slice(0, -(mascot.length + 1)) : value;
-  }
+
+    const value = String(name || '').trim();
+    const mascot = mascots
+      .sort((a, b) => b.length - a.length)
+      .find(m => value.toLowerCase().endsWith((' ' + m).toLowerCase()));
+
+    return mascot ? value.slice(0, -(mascot.length + 1)).trim() : value;
+}
 
 function rankedTeamName(name, rank) {
     const shortName = shortTeamName(name);
