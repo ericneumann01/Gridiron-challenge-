@@ -156,11 +156,12 @@
   return isFavorite ? `-${value}` : `+${value}`;
 }
   function pointsFor(type) {
-    if (type === 'favorite_win') return ui.scoring.win;
-    if (type === 'favorite_cover') return ui.scoring.cover;
-    if (type === 'underdog_win') return ui.scoring.dog;
-    return 0;
-  }
+  if (type === 'favorite_win') return ui.scoring.win;
+  if (type === 'favorite_cover') return ui.scoring.cover;
+  if (type === 'underdog_win') return ui.scoring.dog;
+  if (type === 'underdog_cover') return ui.scoring.cover;
+  return 0;
+}
   function teamLabel(abbr, sport) {
     const nfl = {ARI:'Arizona Cardinals',ATL:'Atlanta Falcons',BAL:'Baltimore Ravens',BUF:'Buffalo Bills',CAR:'Carolina Panthers',CHI:'Chicago Bears',CIN:'Cincinnati Bengals',CLE:'Cleveland Browns',DAL:'Dallas Cowboys',DEN:'Denver Broncos',DET:'Detroit Lions',GB:'Green Bay Packers',HOU:'Houston Texans',IND:'Indianapolis Colts',JAX:'Jacksonville Jaguars',KC:'Kansas City Chiefs',LV:'Las Vegas Raiders',LAC:'Los Angeles Chargers',LA:'Los Angeles Rams',MIA:'Miami Dolphins',MIN:'Minnesota Vikings',NE:'New England Patriots',NO:'New Orleans Saints',NYG:'New York Giants',NYJ:'New York Jets',PHI:'Philadelphia Eagles',PIT:'Pittsburgh Steelers',SF:'San Francisco 49ers',SEA:'Seattle Seahawks',TB:'Tampa Bay Buccaneers',TEN:'Tennessee Titans',WAS:'Washington Commanders'};
     return sport === 'NFL' ? (nfl[abbr] || abbr || 'Unknown team') : (abbr || 'Unknown team');
@@ -185,44 +186,106 @@
   function mapGame(row) {
     const teams = deriveFavoriteAndDog(row);
     return {
-      id: row.id, sport: row.sport || 'NFL', league: row.sport === 'NCAA' ? 'NCAA' : 'NFL',
-      away: row.away_team, home: row.home_team, favorite: teams.favorite,
-      underdog: teams.underdog, favoriteSide: teams.favoriteSide,
-      spread: Number(row.spread) || 0, kickoff_at: row.kickoff_at,
-      time: row.kickoff_at ? new Date(row.kickoff_at).toLocaleString('en-US',{timeZone:'America/Chicago',weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+' CT' : 'Kickoff time TBD',
-      status: row.status || 'Upcoming', away_score: row.away_score, home_score: row.home_score
+      id: row.id,
+      sport: row.sport || 'NFL',
+      league: row.sport === 'NCAA' ? 'NCAA' : 'NFL',
+      away: row.away_team,
+      home: row.home_team,
+      awayRank: row.sport === 'NCAA' ? row.away_rank : null,
+      homeRank: row.sport === 'NCAA' ? row.home_rank : null,
+      favorite: teams.favorite,
+      underdog: teams.underdog,
+      favoriteSide: teams.favoriteSide,
+      spread: Number(row.spread) || 0,
+      kickoff_at: row.kickoff_at,
+      time: row.kickoff_at
+        ? new Date(row.kickoff_at).toLocaleString('en-US', {
+            timeZone: 'America/Chicago',
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit'
+          }) + ' CT'
+        : 'Kickoff time TBD',
+      status: row.status || 'Upcoming',
+      away_score: row.away_score,
+      home_score: row.home_score
     };
   }
+  function shortTeamName(name) {
+    const mascots = [
+      'Tar Heels', 'Blue Devils', 'Fighting Irish', 'Nittany Lions',
+      'Crimson Tide', 'Buckeyes', 'Wolverines', 'Cornhuskers',
+      'Bulldogs', 'Tigers', 'Wildcats', 'Eagles', 'Hurricanes',
+      'Seminoles', 'Longhorns', 'Sooners', 'Cowboys', 'Broncos',
+      'Hawkeyes', 'Cyclones', 'Spartans', 'Hoosiers', 'Gators',
+      'Volunteers', 'Rebels', 'Razorbacks', 'Gamecocks', 'Aggies',
+      'Mustangs', 'Cardinals', 'Golden Bears', 'Bears', 'Lions',
+      'Panthers', 'Falcons', 'Knights', 'Pirates', 'Raiders',
+      'Warriors', 'Ducks', 'Beavers', 'Buffaloes', 'Utes',
+      'Cougars', 'Mountaineers', 'Red Raiders', 'Yellow Jackets',
+      'Orange', 'Boilermakers', 'Terrapins', 'Huskies', 'Demon Deacons'
+    ];
+    const value = String(name || '');
+    const mascot = mascots.find(m => value.endsWith(' ' + m));
+    return mascot ? value.slice(0, -(mascot.length + 1)) : value;
+  }
+
+function rankedTeamName(name, rank) {
+    const shortName = shortTeamName(name);
+    return rank ? `(${rank}) ${shortName}` : shortName;
+}
   function cardHtml(game, featured=false) {
     const current = ui.picks[String(game.id)];
-    const lock = ui.activeWeek?.picks_lock_at && new Date(ui.activeWeek.picks_lock_at).getTime() <= Date.now();
+    const lock = ui.activeWeek?.picks_lock_at &&
+      new Date(ui.activeWeek.picks_lock_at).getTime() <= Date.now();
     const locked = Boolean(lock) || ui.submitted;
-    const favoriteName = game.favorite || 'Favorite';
-    const dogName = game.underdog || 'Underdog';
+
+    const favoriteIsAway = game.favoriteSide === 'away';
+    const favoriteRank = favoriteIsAway ? game.awayRank : game.homeRank;
+    const dogRank = favoriteIsAway ? game.homeRank : game.awayRank;
+
+    const favoriteName = rankedTeamName(game.favorite, favoriteRank);
+    const dogName = rankedTeamName(game.underdog, dogRank);
+
+    const favoriteSpread = spreadText(game.spread, true);
+    const dogSpread = spreadText(game.spread, false);
+
     return `<article class="game ${featured?'span6':'span6'}">
-      <div class="game-top"><div><div class="teams">${escapeHtml(game.away)} @ ${escapeHtml(game.home)}</div><div class="game-meta">${escapeHtml(game.league)} · ${escapeHtml(game.time)}</div></div><span class="pill">${escapeHtml(game.status)}</span></div>
-    <div class="game-meta">Favorite: ${escapeHtml(favoriteName)} ${game.spread ? '('+escapeHtml(spreadText(game.spread, true))+')' : ''}</div>  
-     
-<div class="pick-options">
-  <button class="pick ${current==='favorite_win'?'selected':''}" data-pick="${escapeHtml(game.id)}:favorite_win" ${locked?'disabled':''}>
-    Favorite wins
-    <span class="sub">${ui.scoring.win} point${ui.scoring.win===1?'':'s'}</span>
-  </button>
-  <button class="pick ${current==='underdog_win'?'selected':''}" data-pick="${escapeHtml(game.id)}:underdog_win" ${locked?'disabled':''}>
-    ${escapeHtml(dogName)} wins outright
-    <span class="sub">${ui.scoring.dog} points</span>
-  </button>
-  <button class="pick ${current==='favorite_cover'?'selected':''}" data-pick="${escapeHtml(game.id)}:favorite_cover" ${locked?'disabled':''}>
-    Favorite covers
-    <span class="sub">${ui.scoring.cover} points</span>
-  </button>
-  <button class="pick ${current==='underdog_cover'?'selected':''}" data-pick="${escapeHtml(game.id)}:underdog_cover" ${locked?'disabled':''}>
-    Underdog covers
-    <span class="sub">2 points</span>
-  </button>
-</div>
-</article>`;
-  }
+      <div class="game-top">
+        <div>
+          <div class="teams">${escapeHtml(shortTeamName(game.away))} @ ${escapeHtml(shortTeamName(game.home))}</div>
+          <div class="game-meta">${escapeHtml(game.league)} · ${escapeHtml(game.time)}</div>
+        </div>
+        <span class="pill">${escapeHtml(game.status)}</span>
+      </div>
+
+      <div class="game-meta">Favorite: ${escapeHtml(favoriteName)} ${escapeHtml(favoriteSpread)}</div>
+
+      <div class="pick-options">
+        <button class="pick ${current==='favorite_win'?'selected':''}" data-pick="${escapeHtml(game.id)}:favorite_win" ${locked?'disabled':''}>
+          ${escapeHtml(favoriteName)} ${escapeHtml(favoriteSpread)} Wins
+          <span class="sub">${ui.scoring.win} point${ui.scoring.win===1?'':'s'}</span>
+        </button>
+
+        <button class="pick ${current==='favorite_cover'?'selected':''}" data-pick="${escapeHtml(game.id)}:favorite_cover" ${locked?'disabled':''}>
+          ${escapeHtml(favoriteName)} ${escapeHtml(favoriteSpread)} Covers
+          <span class="sub">${ui.scoring.cover} points</span>
+        </button>
+
+        <button class="pick ${current==='underdog_win'?'selected':''}" data-pick="${escapeHtml(game.id)}:underdog_win" ${locked?'disabled':''}>
+          ${escapeHtml(dogName)} ${escapeHtml(dogSpread)} Wins
+          <span class="sub">${ui.scoring.dog} points</span>
+        </button>
+
+        <button class="pick ${current==='underdog_cover'?'selected':''}" data-pick="${escapeHtml(game.id)}:underdog_cover" ${locked?'disabled':''}>
+          ${escapeHtml(dogName)} ${escapeHtml(dogSpread)} Covers
+          <span class="sub">2 points</span>
+        </button>
+      </div>
+    </article>`;
+}
   function renderGames() {
     const filtered = ui.games.filter(g => ui.filter === 'All' || g.league === ui.filter);
     $('allGames').innerHTML = filtered.length ? filtered.map(g=>cardHtml(g)).join('') : '<div class="empty span12">No games found for this filter and week.</div>';
@@ -390,7 +453,7 @@
     const ids = (links||[]).map(x=>x.game_id);
     if (!ids.length) { ui.games=[]; ui.picks={}; renderGames(); renderParlayOptions(); status('pickStatus','No games are assigned to this week yet.','error'); return; }
     const {data:rows,error:gameError} = await supabase.from('games')
-      .select('id,provider,provider_game_id,sport,season_year,week_number,away_team,home_team,favorite_team,spread,kickoff_at,status,away_score,home_score')
+      .select('id,provider,provider_game_id,sport,season_year,week_number,away_team,home_team,favorite_team,spread,kickoff_at,status,away_score,home_score,away_rank,home_rank')
       .in('id',ids);
     if (gameError) { status('pickStatus','Could not load games: '+gameError.message,'error'); return; }
     ui.games = (rows||[]).map(mapGame).sort((a,b)=>(a.kickoff_at||'').localeCompare(b.kickoff_at||''));
