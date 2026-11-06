@@ -213,7 +213,7 @@
       home_score: row.home_score
     };
   }
-  function shortTeamName(name) {
+function shortTeamName(name) {
     const mascots = [
       'Golden Gophers',
       'Coastal Carolina Chanticleers',
@@ -298,8 +298,7 @@
       .find(m => value.toLowerCase().endsWith((' ' + m).toLowerCase()));
 
     return mascot ? value.slice(0, -(mascot.length + 1)).trim() : value;
-}
-
+}  
 function rankedTeamName(name, rank) {
     const shortName = shortTeamName(name);
     return rank ? `(${rank}) ${shortName}` : shortName;
